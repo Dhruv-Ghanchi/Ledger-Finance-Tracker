@@ -239,4 +239,13 @@ This project is open‑source and available under the MIT License.
 
 ---
 
+## 👤 Author
+
+**Dhruv Chandrakant Ghanchi**
+
+- GitHub: [Dhruv-Ghanchi](https://github.com/Dhruv-Ghanchi)
+- LinkedIn: [dhruv-ghanchi-9b0180371](https://www.linkedin.com/in/dhruv-ghanchi-9b0180371/)
+
+---
+
 Made with ❤️ for easier financial tracking.
