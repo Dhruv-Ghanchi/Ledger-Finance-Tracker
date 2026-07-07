@@ -1,0 +1,93 @@
+{
+  "theme": "Light",
+  "archetype": "Archetype 4 (Swiss & High-Contrast)",
+  "emotional_tone": "Authority, clarity, and precision",
+  "typography": {
+    "heading_font": "Cabinet Grotesk",
+    "body_font": "IBM Plex Sans",
+    "mono_font": "JetBrains Mono",
+    "rules": [
+      "Use Cabinet Grotesk for all headings, ensuring tight tracking (tracking-tight) for an authoritative feel.",
+      "Never use Inter or default generic fonts for headings.",
+      "Use IBM Plex Sans for body text to ensure maximum readability for dense financial data.",
+      "Use JetBrains Mono or IBM Plex Mono for all numeric values in tables, balances, and charts to ensure tabular alignment.",
+      "Keep text sizes moderate: H1 max text-4xl sm:text-5xl. Use text-sm for overlines/labels with uppercase and tracking-widest."
+    ]
+  },
+  "colors": {
+    "background": "#F4F4F5", 
+    "foreground": "#09090B",
+    "card_background": "#FFFFFF",
+    "border": "#E4E4E7",
+    "personal_blue": {
+      "DEFAULT": "#0F52BA",
+      "light": "#DBEAFE",
+      "dark": "#1E3A8A"
+    },
+    "business_green": {
+      "DEFAULT": "#059669",
+      "light": "#D1FAE5",
+      "dark": "#064E3B"
+    },
+    "neutral_accents": {
+      "muted": "#71717A",
+      "accent": "#F4F4F5"
+    },
+    "rules": [
+      "Color is function only. The UI should be primarily monochrome (white, zinc-100, zinc-950).",
+      "Use Personal Blue and Business Green exclusively to differentiate the two transaction types. Do not use these colors for unrelated UI decorations.",
+      "Ensure all text against colored backgrounds meets at least a 4.5:1 contrast ratio.",
+      "Always set text color on hover explicitly."
+    ]
+  },
+  "spacing_and_layout": {
+    "grid_system": "The Control Room Grid",
+    "rules": [
+      "Base Grid: grid-cols-1 md:grid-cols-3 lg:grid-cols-4 with gap-4 or gap-6.",
+      "Widget scaling: Single metrics span 1 col, main charts span 2 or 3 cols.",
+      "Use generous internal padding for containers (p-6 or p-8) and flat solid surfaces.",
+      "Never center by default; prefer left-alignment for all dense data, inputs, and paragraphs.",
+      "F-Pattern Information Architecture: Sticky top bar with Month/Year selector, and clean tabs for main sections."
+    ]
+  },
+  "components_strategy": {
+    "surfaces": "Flat Solid (Max 8px border-radius, crisp 1px borders, no soft shadows. Only use subtle ambient shadow for hover states.)",
+    "cards": "Cardless or strictly rectangular flat cards with border-zinc-200. No heavy dropshadows.",
+    "buttons": "Square or subtle-rounded buttons. Primary actions use solid monochrome (zinc-900), toggle buttons for Personal/Business use their respective brand colors.",
+    "tables": "Shadcn Table with clear border-b separation, mono-font numbers, right-aligned amounts.",
+    "inputs": "Shadcn Select, Input, and Form with sharp 1px borders.",
+    "modals": "Shadcn Dialog for the 'Add Entry' form with backdrop-blur overlay.",
+    "charts": "Recharts with simple, classic visualizations (Bar for income vs expense, Line for yearly trend, Pie/Donut for categories). Use the Personal Blue and Business Green in charts.",
+    "pin_screen": "Minimalist centered layout, monochrome, relying purely on typography and input feedback."
+  },
+  "motion_and_interactions": {
+    "rules": [
+      "Micro-interactions only. Hover states must subtly darken background or border.",
+      "Tabs and Modals should have a very quick (150ms) fade-in entrance.",
+      "No bounce or spring animations; keep it professional and precise."
+    ]
+  },
+  "media_and_icons": {
+    "icon_library": "lucide-react",
+    "icon_usage": "Use icons sparingly. Prefer text labels. Use icons mainly for directional cues (arrows), actions (edit, delete), and category markers.",
+    "image_urls": {},
+    "rules": [
+      "No decorative images. It's a pure dashboard."
+    ]
+  },
+  "testing": {
+    "rules": [
+      "All interactive elements (buttons, inputs, tabs, row actions) MUST include data-testid attributes in kebab-case."
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install required fonts (Cabinet Grotesk, IBM Plex Sans, JetBrains Mono) via Google Fonts or custom font faces in index.css.",
+    "Override Tailwind config colors to match the specific palette (zinc variations, custom blue/green).",
+    "Implement a F-pattern dashboard with a sticky top header containing the Month, Year, and primary 'Add Entry' CTA.",
+    "Ensure amounts use the Indian numbering system format (lakhs/crores) with the ₹ symbol.",
+    "Use Recharts for all data visualization, styling them with minimal grids and mono-spaced tooltips.",
+    "The PIN lock screen should be the root route '/' or a full-screen overlay if unauthenticated, using a simple Shadcn OTP input or standard password input.",
+    "Ensure 'Personal' and 'Business' toggle in the Add Entry modal heavily highlights the chosen context (Blue for Personal, Green for Business) to avoid mistaken entries.",
+    "Use Shadcn UI primitives for Tabs, Table, Dialog, Select, Input, Button, Card."
+  ]
+}
