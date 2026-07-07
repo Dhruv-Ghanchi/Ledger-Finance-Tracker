@@ -165,7 +165,7 @@ The app will open at `http://localhost:3000`.
 
 ---
 
-## 📖 User Guide (for your father)
+## 📖 User Guide
 
 1. **Open the live link** (e.g., `https://ledger-dhruv-ghanchi.netlify.app`).
 2. On first visit, you'll be prompted to **set a 4‑digit PIN**. Remember it – you'll need it each time.
