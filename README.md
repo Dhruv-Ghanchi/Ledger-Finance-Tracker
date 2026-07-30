@@ -7,7 +7,7 @@ Built for a single user (like your father), it provides a clean, intuitive inter
 
 ## 🔗 Live Demo
 
-- **Frontend**: [https://ledger-dhruv-ghanchi.netlify.app](https://ledger-dhruv-ghanchi.netlify.app)  
+- **Frontend**: [https://ledger-dhruv-ghanchi.vercel.app](https://ledger-dhruv-ghanchi.vercel.app)  
 - **Backend API**: [https://ledger-finance-tracker-backend.onrender.com](https://ledger-finance-tracker-backend.onrender.com)
 
 ---
@@ -34,7 +34,7 @@ Built for a single user (like your father), it provides a clean, intuitive inter
 | **Frontend** | React 19, Tailwind CSS, shadcn/ui, Recharts, React Hook Form, Axios |
 | **Backend**  | FastAPI (Python 3.11+), Motor (async MongoDB driver), bcrypt, PyJWT |
 | **Database** | MongoDB (Atlas or local) |
-| **Deployment** | Render (backend), Netlify (frontend), MongoDB Atlas (database) |
+| **Deployment** | Render (backend), Vercel (frontend), MongoDB Atlas (database) |
 
 ---
 
@@ -122,7 +122,7 @@ The app will open at `http://localhost:3000`.
 |----------|-------------|
 | `MONGO_URL` | MongoDB connection string (local or Atlas) |
 | `DB_NAME` | Database name (e.g., `finance_tracker`) |
-| `CORS_ORIGINS` | Comma‑separated allowed frontend origins (e.g., `http://localhost:3000,https://yourapp.netlify.app`) |
+| `CORS_ORIGINS` | Comma‑separated allowed frontend origins (e.g., `http://localhost:3000,https://yourapp.vercel.app`) |
 
 ### Frontend (`.env`)
 
@@ -147,15 +147,15 @@ The app will open at `http://localhost:3000`.
 4. Add environment variables (`MONGO_URL`, `DB_NAME`, `CORS_ORIGINS`).
 5. Deploy – you'll get a public URL like `https://your-backend.onrender.com`.
 
-### 2. Frontend (Netlify)
+### 2. Frontend (Vercel)
 
-1. On [Netlify](https://netlify.com), import your GitHub repo.
+1. On [Vercel](https://vercel.com), import your GitHub repo.
 2. Set:
    - **Root Directory**: `app/frontend`
    - **Build Command**: `npm run build`
-   - **Publish Directory**: `build`
+   - **Output Directory**: `build`
 3. Add environment variable: `REACT_APP_BACKEND_URL` = your Render URL.
-4. Deploy – you'll get a public URL like `https://your-app.netlify.app`.
+4. Deploy – you'll get a public URL like `https://your-app.vercel.app`.
 
 ### 3. Database (MongoDB Atlas)
 
@@ -167,7 +167,7 @@ The app will open at `http://localhost:3000`.
 
 ## 📖 User Guide
 
-1. **Open the live link** (e.g., `https://ledger-dhruv-ghanchi.netlify.app`).
+1. **Open the live link** (e.g., `https://ledger-dhruv-ghanchi.vercel.app`).
 2. On first visit, you'll be prompted to **set a 4‑digit PIN**. Remember it – you'll need it each time.
 3. After unlocking, you'll see the **Dashboard**:
    - **Add Entry**: Click the "Add Entry" button, select scope (Personal/Business), type (Income/Expense), fill amount, date, category, and optional note.
@@ -234,7 +234,7 @@ This project is open‑source and available under the MIT License.
 - [shadcn/ui](https://ui.shadcn.com) for beautiful components  
 - [Recharts](https://recharts.org) for charts  
 - [FastAPI](https://fastapi.tiangolo.com) for the robust backend  
-- [Render](https://render.com) and [Netlify](https://netlify.com) for free hosting  
+- [Render](https://render.com) and [Vercel](https://vercel.com) for free hosting  
 - [MongoDB Atlas](https://www.mongodb.com/atlas) for cloud database
 
 ---
