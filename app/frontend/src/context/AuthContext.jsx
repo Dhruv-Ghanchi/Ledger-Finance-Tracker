@@ -1,40 +1,39 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { auth, signOut } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { api } from "@/lib/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [pinSet, setPinSet] = useState(null); // null=loading, true/false
-  const [authed, setAuthed] = useState(!!localStorage.getItem("ft_session"));
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [dbUser, setDbUser] = useState(null);
 
-  const refresh = useCallback(async () => {
-    const { data } = await api.get("/auth/status");
-    setPinSet(data.pin_set);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        try {
+          const { data } = await api.post("/users/sync");
+          setDbUser(data);
+        } catch (error) {
+          console.error("Failed to sync user with backend", error);
+        }
+      } else {
+        setDbUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
-
-  const setup = async (pin) => {
-    const { data } = await api.post("/auth/setup", { pin });
-    localStorage.setItem("ft_session", data.token);
-    setAuthed(true);
-    setPinSet(true);
-  };
-
-  const verify = async (pin) => {
-    const { data } = await api.post("/auth/verify", { pin });
-    localStorage.setItem("ft_session", data.token);
-    setAuthed(true);
-  };
-
   const logout = async () => {
-    try { await api.post("/auth/logout"); } catch (_e) { /* ignore */ }
-    localStorage.removeItem("ft_session");
-    setAuthed(false);
+    await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ pinSet, authed, setup, verify, logout, refresh }}>
+    <AuthContext.Provider value={{ currentUser, dbUser, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
