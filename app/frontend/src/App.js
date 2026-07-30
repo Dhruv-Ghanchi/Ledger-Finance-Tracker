@@ -7,6 +7,8 @@ import Dashboard from "@/pages/Dashboard";
 import Pricing from "@/pages/Pricing";
 import { Toaster } from "@/components/ui/sonner";
 
+import Landing from "@/pages/Landing";
+
 function Root() {
   const { currentUser, loading } = useAuth();
   
@@ -31,7 +33,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/pricing" element={<Pricing />} />
-            <Route path="/" element={<Root />} />
+            <Route path="/dashboard" element={<Root />} />
+            <Route path="/" element={<Landing />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
