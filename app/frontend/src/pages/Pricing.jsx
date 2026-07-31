@@ -2,7 +2,8 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function Pricing() {
   const { dbUser } = useAuth();
@@ -35,14 +36,14 @@ export default function Pricing() {
         description: `${plan} Premium Subscription`,
         handler: function (response) {
           alert("Payment successful! Your premium access will be active shortly.");
-          navigate("/");
+          navigate("/dashboard");
         },
         prefill: {
           email: dbUser?.email,
           name: dbUser?.name,
         },
         theme: {
-          color: "#2563eb",
+          color: "#0a0a0a", // Matches the minimalist dark aesthetic
         },
       };
 
@@ -54,46 +55,95 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-8 text-white">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-4">Pricing Plans</h1>
-        <p className="text-center text-zinc-400 mb-12">Upgrade your account to unlock premium features.</p>
+    <div className="min-h-screen w-full bg-background bg-grain flex flex-col px-6 py-12">
+      <div className="max-w-[1000px] w-full mx-auto flex-1 flex flex-col">
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 flex flex-col">
-            <h3 className="text-xl font-bold mb-2">Free Trial</h3>
-            <p className="text-4xl font-bold mb-6">₹0<span className="text-sm font-normal text-zinc-500">/7 days</span></p>
-            <ul className="text-zinc-400 space-y-3 mb-8 flex-1">
-              <li>✓ All premium features</li>
-              <li>✓ 7 days duration</li>
-              <li>✓ No credit card required</li>
-            </ul>
-            <Button disabled variant="outline" className="w-full">Active Default</Button>
+        {/* Header / Logo */}
+        <div className="flex items-center justify-between mb-16">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-foreground flex items-center justify-center">
+              <span className="text-background font-display text-sm font-bold">₹</span>
+            </div>
+            <div className="leading-tight">
+              <div className="font-display font-semibold tracking-tight text-[15px]">Ledger</div>
+              <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Premium</div>
+            </div>
           </div>
+          <Link to="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
+          </Link>
+        </div>
 
-          <div className="bg-zinc-900 border border-blue-500 rounded-xl p-8 flex flex-col relative">
-            <div className="absolute top-0 right-0 bg-blue-500 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">POPULAR</div>
-            <h3 className="text-xl font-bold mb-2">Monthly Premium</h3>
-            <p className="text-4xl font-bold mb-6">₹49<span className="text-sm font-normal text-zinc-500">/month</span></p>
-            <ul className="text-zinc-400 space-y-3 mb-8 flex-1">
-              <li>✓ Unlimited entries</li>
-              <li>✓ Advanced reports</li>
-              <li>✓ Export data</li>
-            </ul>
-            <Button onClick={() => handleUpgrade("monthly")} className="w-full bg-blue-600 hover:bg-blue-700 text-white">Upgrade Monthly</Button>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="text-center mb-16">
+            <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mb-4">
+              Simple, transparent pricing
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-[500px] mx-auto">
+              Upgrade your account to unlock premium features and unlimited entries.
+            </p>
           </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Free Tier */}
+            <div className="bg-card border border-border rounded-xl p-8 flex flex-col shadow-sm">
+              <h3 className="font-display text-xl font-semibold tracking-tight mb-2">Free Trial</h3>
+              <div className="mb-6">
+                <span className="font-display text-4xl font-semibold tracking-tight">₹0</span>
+                <span className="text-sm text-muted-foreground ml-1">/ 2 months</span>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
+                <li className="flex items-center">✓ <span className="ml-2">All premium features</span></li>
+                <li className="flex items-center">✓ <span className="ml-2">2 months duration</span></li>
+                <li className="flex items-center">✓ <span className="ml-2">No credit card required</span></li>
+              </ul>
+              <Button disabled variant="outline" className="w-full h-11 border-border">
+                Active Default
+              </Button>
+            </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 flex flex-col">
-            <h3 className="text-xl font-bold mb-2">Yearly Premium</h3>
-            <p className="text-4xl font-bold mb-6">₹499<span className="text-sm font-normal text-zinc-500">/year</span></p>
-            <ul className="text-zinc-400 space-y-3 mb-8 flex-1">
-              <li>✓ Save 15%</li>
-              <li>✓ Unlimited entries</li>
-              <li>✓ Advanced reports</li>
-              <li>✓ Export data</li>
-            </ul>
-            <Button onClick={() => handleUpgrade("yearly")} variant="outline" className="w-full">Upgrade Yearly</Button>
+            {/* Monthly Tier */}
+            <div className="bg-card border-2 border-foreground rounded-xl p-8 flex flex-col relative shadow-md">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                Most Popular
+              </div>
+              <h3 className="font-display text-xl font-semibold tracking-tight mb-2">Monthly</h3>
+              <div className="mb-6">
+                <span className="font-display text-4xl font-semibold tracking-tight">₹49</span>
+                <span className="text-sm text-muted-foreground ml-1">/ month</span>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
+                <li className="flex items-center text-foreground">✓ <span className="ml-2">Unlimited entries</span></li>
+                <li className="flex items-center text-foreground">✓ <span className="ml-2">Advanced reports</span></li>
+                <li className="flex items-center text-foreground">✓ <span className="ml-2">Export data</span></li>
+              </ul>
+              <Button onClick={() => handleUpgrade("monthly")} className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-colors">
+                Upgrade Monthly
+              </Button>
+            </div>
+
+            {/* Yearly Tier */}
+            <div className="bg-card border border-border rounded-xl p-8 flex flex-col shadow-sm">
+              <h3 className="font-display text-xl font-semibold tracking-tight mb-2">Yearly</h3>
+              <div className="mb-6">
+                <span className="font-display text-4xl font-semibold tracking-tight">₹499</span>
+                <span className="text-sm text-muted-foreground ml-1">/ year</span>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
+                <li className="flex items-center">✓ <span className="ml-2">Save ~15% annually</span></li>
+                <li className="flex items-center">✓ <span className="ml-2">Unlimited entries</span></li>
+                <li className="flex items-center">✓ <span className="ml-2">Advanced reports</span></li>
+                <li className="flex items-center">✓ <span className="ml-2">Export data</span></li>
+              </ul>
+              <Button onClick={() => handleUpgrade("yearly")} variant="outline" className="w-full h-11 border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                Upgrade Yearly
+              </Button>
+            </div>
           </div>
+        </div>
+
+        <div className="text-[11px] uppercase tracking-widest text-muted-foreground text-center mt-16">
+          Ledger SaaS Platform
         </div>
       </div>
     </div>

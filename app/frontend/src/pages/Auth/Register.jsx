@@ -12,7 +12,7 @@ export default function Register() {
     e.preventDefault();
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       alert("Failed to register: " + error.message);
     }
@@ -21,7 +21,7 @@ export default function Register() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       alert("Failed to register with Google: " + error.message);
     }

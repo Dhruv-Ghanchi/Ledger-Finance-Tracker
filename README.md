@@ -1,7 +1,7 @@
 # Ledger – Personal & Business Finance Tracker
 
-**Ledger** is a full‑stack web application that replaces the traditional Excel workbook for managing personal and business finances.  
-Built for a single user (like your father), it provides a clean, intuitive interface to log income and expenses, automatically computes monthly/yearly summaries, and exports data to Excel/CSV.
+**Ledger** is a full‑stack web application that serves as a modern, multi-user SaaS platform for managing personal and business finances.  
+It provides a clean, intuitive interface to log income and expenses, automatically computes monthly/yearly summaries, offers data exports, and includes premium subscription plans.
 
 ---
 
@@ -14,16 +14,17 @@ Built for a single user (like your father), it provides a clean, intuitive inter
 
 ## ✨ Features
 
-- 🔐 **PIN‑based authentication** – set a 4‑8 digit PIN on first launch; session stored securely.
+- 🔐 **Multi-User Authentication** – Secure sign-up and login via Email/Password or Google (powered by Firebase).
+- 🚀 **SaaS Landing Page & Pricing** – Clean public landing page with Razorpay integration for Monthly and Yearly premium subscriptions.
 - 📊 **Dual scope**: log entries as **Personal** or **Business** with separate summaries.
-- 💰 **Income / Expense tracking** with 20+ pre‑loaded expense categories and 10 income categories (custom categories can be added/deleted).
+- 💰 **Income / Expense tracking** with 11 pre‑loaded default categories per user (custom categories can be added/deleted).
 - 📅 **Indian Financial Year** (April–March) – view monthly and yearly summaries in FY order.
 - 📈 **Visual insights** – Recharts dashboard with:
   - Monthly income vs expense bar chart
   - Expense breakdown pie chart
   - Yearly net trend line chart
 - 📤 **Export** to CSV or Excel (.xlsx) with filters for FY, year, month, or scope.
-- 🌐 **Cloud‑native** – data stored in MongoDB Atlas, accessible from anywhere.
+- 🌐 **Cloud‑native** – API built with FastAPI, data stored securely in MongoDB Atlas.
 
 ---
 
@@ -31,10 +32,11 @@ Built for a single user (like your father), it provides a clean, intuitive inter
 
 | Layer       | Technology |
 |-------------|------------|
-| **Frontend** | React 19, Tailwind CSS, shadcn/ui, Recharts, React Hook Form, Axios |
-| **Backend**  | FastAPI (Python 3.11+), Motor (async MongoDB driver), bcrypt, PyJWT |
+| **Frontend** | React 19, Tailwind CSS, shadcn/ui, Recharts, Firebase Auth, Razorpay SDK |
+| **Backend**  | FastAPI (Python 3.11+), Motor (async MongoDB driver), Firebase Admin, Razorpay SDK |
 | **Database** | MongoDB (Atlas or local) |
 | **Deployment** | Render (backend), Vercel (frontend), MongoDB Atlas (database) |
+| **AI Tools** | Serena MCP (Semantic IDE code analysis) & Ponytail (minimal code generation) |
 
 ---
 
@@ -44,7 +46,8 @@ Built for a single user (like your father), it provides a clean, intuitive inter
 Ledger/
 ├── app/
 │   ├── backend/
-│   │   ├── server.py              # FastAPI main application
+│   │   ├── app/                   # FastAPI routes (auth, categories, entries, payments)
+│   │   ├── server.py              # Application entrypoint
 │   │   ├── requirements.txt       # Python dependencies
 │   │   └── .env.example           # Environment template
 │   ├── frontend/
@@ -52,18 +55,13 @@ Ledger/
 │   │   ├── src/
 │   │   │   ├── components/        # React components (UI + feature)
 │   │   │   ├── context/           # Auth context
-│   │   │   ├── lib/               # Utilities (API, formatting, FY helpers)
-│   │   │   ├── pages/             # Dashboard & PinLock
-│   │   │   ├── App.js             # Root component
-│   │   │   ├── index.js           # Entry point
+│   │   │   ├── pages/             # Landing, Dashboard, Pricing, Login, Register
+│   │   │   ├── App.js             # Root routing
 │   │   │   └── index.css          # Global styles + Tailwind
 │   │   ├── package.json
-│   │   ├── tailwind.config.js
-│   │   └── craco.config.js
-│   ├── memory/                    # Documentation & screenshots
+│   │   └── tailwind.config.js
 │   └── .gitignore
-├── README.md
-└── LICENSE (optional)
+└── README.md
 ```
 
 ---
@@ -75,6 +73,8 @@ Ledger/
 - **Node.js** (v18+) and **npm** / **yarn**
 - **Python** (3.11+) and **pip**
 - **MongoDB** (local or Atlas account)
+- **Firebase** Project (for Auth credentials)
+- **Razorpay** Account (for Payment keys)
 
 ### 2. Backend Setup
 
@@ -86,14 +86,12 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `.env` with your MongoDB connection string and other variables.  
+Edit `.env` with your MongoDB connection string, Firebase Admin credentials (JSON stringified), and Razorpay API keys.  
 Then run:
 
 ```bash
 uvicorn server:app --reload --port 8000
 ```
-
-The API will be available at `http://localhost:8000`.
 
 ### 3. Frontend Setup
 
@@ -102,15 +100,13 @@ cd app/frontend
 cp .env.example .env
 ```
 
-Add your backend URL to `.env` (or set it to `http://localhost:8000` during development).  
+Add your Firebase client config, Razorpay Key ID, and Backend URL to `.env`.  
 Install dependencies:
 
 ```bash
 npm install --legacy-peer-deps
 npm start
 ```
-
-The app will open at `http://localhost:3000`.
 
 ---
 
@@ -122,120 +118,103 @@ The app will open at `http://localhost:3000`.
 |----------|-------------|
 | `MONGO_URL` | MongoDB connection string (local or Atlas) |
 | `DB_NAME` | Database name (e.g., `finance_tracker`) |
-| `CORS_ORIGINS` | Comma‑separated allowed frontend origins (e.g., `http://localhost:3000,https://yourapp.vercel.app`) |
+| `CORS_ORIGINS` | Comma‑separated allowed frontend origins |
+| `FIREBASE_CREDENTIALS_JSON` | Firebase Admin SDK service account JSON (minified) |
+| `RAZORPAY_KEY_ID` | Razorpay Key ID |
+| `RAZORPAY_KEY_SECRET` | Razorpay Key Secret |
+| `RAZORPAY_PLAN_MONTHLY` | Razorpay Monthly Plan ID |
+| `RAZORPAY_PLAN_YEARLY` | Razorpay Yearly Plan ID |
 
 ### Frontend (`.env`)
 
 | Variable | Description |
 |----------|-------------|
-| `REACT_APP_BACKEND_URL` | Full URL of the backend API (e.g., `http://localhost:8000` or `https://your-backend.onrender.com`) |
-
-> **Important**: Frontend environment variables are **embedded at build time** – they must be set **before running `npm run build`**.
+| `REACT_APP_BACKEND_URL` | Full URL of the backend API |
+| `REACT_APP_FIREBASE_API_KEY` | Firebase API Key |
+| `REACT_APP_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain |
+| `REACT_APP_FIREBASE_PROJECT_ID` | Firebase Project ID |
+| `REACT_APP_RAZORPAY_KEY_ID` | Razorpay Key ID |
 
 ---
 
 ## 🌍 Production Deployment
 
 ### 1. Backend (Render)
-
-1. Push your code to a GitHub repository.
-2. On [Render](https://render.com), create a **New Web Service**, connect your repo.
-3. Set:
-   - **Root Directory**: `app/backend`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn server:app --host 0.0.0.0 --port 10000`
-4. Add environment variables (`MONGO_URL`, `DB_NAME`, `CORS_ORIGINS`).
-5. Deploy – you'll get a public URL like `https://your-backend.onrender.com`.
+- Deploy as a Web Service. Ensure the build command installs requirements and start command runs `uvicorn`.
+- Inject all environment variables including the stringified Firebase JSON.
 
 ### 2. Frontend (Vercel)
-
-1. On [Vercel](https://vercel.com), import your GitHub repo.
-2. Set:
-   - **Root Directory**: `app/frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `build`
-3. Add environment variable: `REACT_APP_BACKEND_URL` = your Render URL.
-4. Deploy – you'll get a public URL like `https://your-app.vercel.app`.
-
-### 3. Database (MongoDB Atlas)
-
-- Create a free M0 cluster.
-- In **Network Access**, add `0.0.0.0/0` (or your Render IP range) to allow connections.
-- Copy the connection string and use it as `MONGO_URL` (ensure password is properly URL‑encoded).
+- Deploy the React app and ensure all `REACT_APP_` environment variables are set before the build step.
 
 ---
 
 ## 📖 User Guide
 
-1. **Open the live link** (e.g., `https://ledger-dhruv-ghanchi.vercel.app`).
-2. On first visit, you'll be prompted to **set a 4‑digit PIN**. Remember it – you'll need it each time.
-3. After unlocking, you'll see the **Dashboard**:
+1. **Visit the Platform**: Open the live link to view the Landing Page.
+2. **Sign In**: Click "Login" or "Get Started" to authenticate via Google or Email/Password.
+3. **Dashboard**:
    - **Add Entry**: Click the "Add Entry" button, select scope (Personal/Business), type (Income/Expense), fill amount, date, category, and optional note.
    - **Daily Entries** tab: view, search, edit, or delete entries.
-   - **Monthly Summary** tab: see income/expense breakdown per scope and category.
-   - **Yearly Summary** tab: view 12‑month table for the current Financial Year.
-   - **Export**: Download data as CSV or Excel (you can filter by scope).
+   - **Monthly / Yearly Summary**: See comprehensive breakdowns per scope and category.
+   - **Export**: Download data as CSV or Excel.
 4. **Manage Categories**: Click the three‑dots menu → "Manage Categories" to add or delete custom categories.
-5. **Lock**: Use the same menu to lock the app (requires PIN again).
+5. **Upgrade**: Visit the Pricing page to subscribe to a Monthly or Yearly premium plan via Razorpay.
 
 ---
 
 ## 📦 Database Schema
 
+### `users`
+| Field | Type | Description |
+|-------|------|-------------|
+| `firebase_uid` | string | Unique Firebase ID |
+| `email` | string | User email |
+| `name` | string | User display name |
+| `razorpay_customer_id`| string | External payment customer ID |
+| `plan` | string | `free`, `monthly`, or `yearly` |
+
 ### `entries`
 | Field     | Type   | Description |
 |-----------|--------|-------------|
 | `id`      | string | UUID       |
+| `user_id` | string | Owner's Firebase UID |
 | `date`    | string | YYYY-MM-DD |
 | `amount`  | float  |            |
 | `type`    | string | `income` or `expense` |
 | `scope`   | string | `personal` or `business` |
-| `category`| string |            |
-| `note`    | string | optional   |
-| `created_at` | string | ISO timestamp |
 
 ### `categories`
 | Field      | Type    | Description |
 |------------|---------|-------------|
 | `id`       | string  | UUID       |
+| `user_id`  | string  | Owner's Firebase UID |
 | `name`     | string  |            |
 | `type`     | string  | `income` or `expense` |
-| `is_preset`| boolean | true for seeded categories |
 
-### `auth`
-| Field | Type   | Description |
-|-------|--------|-------------|
-| `key` | string | `"pin"`     |
-| `hash`| string | bcrypt hash |
-
-### `sessions`
-| Field        | Type   | Description |
-|--------------|--------|-------------|
-| `token`      | string | random session token |
-| `created_at` | string | ISO timestamp |
+### `subscriptions`
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | UUID |
+| `user_id` | string | Owner's Firebase UID |
+| `razorpay_subscription_id` | string | External subscription ID |
+| `status` | string | `active`, `cancelled`, etc. |
 
 ---
 
 ## 🤝 Contributing
 
-This is a personal project, but feel free to fork and adapt.  
-If you find a bug or have an idea, open an issue or a pull request.
-
----
-
-## 📄 License
-
-This project is open‑source and available under the MIT License.
+This project welcomes contributions. Feel free to fork and adapt. If you find a bug or have an idea, open an issue or a pull request.
 
 ---
 
 ## 🙏 Acknowledgements
 
-- [shadcn/ui](https://ui.shadcn.com) for beautiful components  
-- [Recharts](https://recharts.org) for charts  
-- [FastAPI](https://fastapi.tiangolo.com) for the robust backend  
-- [Render](https://render.com) and [Vercel](https://vercel.com) for free hosting  
-- [MongoDB Atlas](https://www.mongodb.com/atlas) for cloud database
+- **[shadcn/ui](https://ui.shadcn.com)** for beautiful components  
+- **[Recharts](https://recharts.org)** for charts  
+- **[FastAPI](https://fastapi.tiangolo.com)** for the robust backend  
+- **[Firebase](https://firebase.google.com)** for robust multi-user authentication
+- **[Razorpay](https://razorpay.com)** for smooth payment gateways
+- **Serena MCP & Ponytail** for accelerating agentic AI development.
 
 ---
 
