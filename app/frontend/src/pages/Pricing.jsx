@@ -20,6 +20,7 @@ export default function Pricing() {
       // Use setTimeout to allow the UI to finish rendering before showing Razorpay popup
       setTimeout(() => handleUpgrade(autoPlan), 500);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, dbUser]);
 
   const loadRazorpay = () => {
