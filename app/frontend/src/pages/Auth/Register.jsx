@@ -8,11 +8,21 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  const handleSuccess = () => {
+    const params = new URLSearchParams(window.location.search);
+    const intent = params.get("intent");
+    if (intent) {
+      navigate(`/pricing?auto_upgrade=${intent}`);
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard");
+      handleSuccess();
     } catch (error) {
       alert("Failed to register: " + error.message);
     }
@@ -21,7 +31,7 @@ export default function Register() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate("/dashboard");
+      handleSuccess();
     } catch (error) {
       alert("Failed to register with Google: " + error.message);
     }
@@ -90,7 +100,7 @@ export default function Register() {
           </Button>
           
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            Already have an account? <Link to="/login" className="text-foreground font-medium hover:underline">Sign in</Link>
+            Already have an account? <Link to={`/login${window.location.search}`} className="text-foreground font-medium hover:underline">Sign in</Link>
           </p>
         </div>
 

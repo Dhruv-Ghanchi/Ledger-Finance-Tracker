@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,19 @@ import { ArrowLeft } from "lucide-react";
 export default function Pricing() {
   const { currentUser, dbUser } = useAuth();
   const navigate = useNavigate();
+  const autoUpgradeTriggered = useRef(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const autoPlan = params.get("auto_upgrade");
+    if (autoPlan && currentUser && dbUser && !autoUpgradeTriggered.current) {
+      autoUpgradeTriggered.current = true;
+      // Clear the query parameter to prevent re-triggering on refresh
+      window.history.replaceState({}, document.title, "/pricing");
+      // Use setTimeout to allow the UI to finish rendering before showing Razorpay popup
+      setTimeout(() => handleUpgrade(autoPlan), 500);
+    }
+  }, [currentUser, dbUser]);
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -21,7 +34,7 @@ export default function Pricing() {
 
   const handleUpgrade = async (plan) => {
     if (!currentUser) {
-      navigate("/register");
+      navigate(`/register?intent=${plan}`);
       return;
     }
 

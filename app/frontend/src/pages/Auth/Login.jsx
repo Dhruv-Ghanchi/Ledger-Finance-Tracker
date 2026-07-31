@@ -8,11 +8,21 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  const handleSuccess = () => {
+    const params = new URLSearchParams(window.location.search);
+    const intent = params.get("intent");
+    if (intent) {
+      navigate(`/pricing?auto_upgrade=${intent}`);
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard");
+      handleSuccess();
     } catch (error) {
       alert("Failed to login: " + error.message);
     }
@@ -21,7 +31,7 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate("/dashboard");
+      handleSuccess();
     } catch (error) {
       alert("Failed to login with Google: " + error.message);
     }
@@ -90,7 +100,7 @@ export default function Login() {
           </Button>
           
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            Don't have an account? <Link to="/register" className="text-foreground font-medium hover:underline">Register here</Link>
+            Don't have an account? <Link to={`/register${window.location.search}`} className="text-foreground font-medium hover:underline">Register here</Link>
           </p>
         </div>
 
