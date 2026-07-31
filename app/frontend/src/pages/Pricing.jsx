@@ -6,7 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 export default function Pricing() {
-  const { dbUser } = useAuth();
+  const { currentUser, dbUser } = useAuth();
   const navigate = useNavigate();
 
   const loadRazorpay = () => {
@@ -20,6 +20,11 @@ export default function Pricing() {
   };
 
   const handleUpgrade = async (plan) => {
+    if (!currentUser) {
+      navigate("/register");
+      return;
+    }
+
     const res = await loadRazorpay();
     if (!res) {
       alert("Razorpay SDK failed to load");
