@@ -17,6 +17,8 @@ from app.core.db import db
 
 router = APIRouter(prefix="/api", tags=["entries"])
 
+# ── Models ─────────────────────────────────────────────────────────────────────
+
 class Entry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -45,19 +47,26 @@ class EntryUpdate(BaseModel):
     category: Optional[str] = None
     note: Optional[str] = None
 
-def build_entries_query(user_id: str, year: Optional[int] = None, month: Optional[int] = None, fy_start: Optional[int] = None, scope: Optional[str] = None, type: Optional[str] = None):
+# ── Query builder ──────────────────────────────────────────────────────────────
+
+def build_entries_query(
+    user_id: str,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    fy_start: Optional[int] = None,
+    scope: Optional[str] = None,
+    type: Optional[str] = None,
+):
     q = {"user_id": user_id}
     if year and month:
-        prefix = f"{year:04d}-{month:02d}"
-        q["date"] = {"$regex": f"^{prefix}"}
+        q["date"] = {"$regex": f"^{year:04d}-{month:02d}"}
     elif year:
         q["date"] = {"$regex": f"^{year:04d}"}
     elif fy_start:
         q = {"$and": [{"user_id": user_id}, {"$or": [
             {"date": {"$gte": f"{fy_start:04d}-04-01", "$lte": f"{fy_start:04d}-12-31"}},
-            {"date": {"$gte": f"{fy_start+1:04d}-01-01", "$lte": f"{fy_start+1:04d}-03-31"}}
+            {"date": {"$gte": f"{fy_start+1:04d}-01-01", "$lte": f"{fy_start+1:04d}-03-31"}},
         ]}]}
-        
     if scope:
         if "$and" in q:
             q["$and"].append({"scope": scope})
@@ -69,6 +78,8 @@ def build_entries_query(user_id: str, year: Optional[int] = None, month: Optiona
         else:
             q["type"] = type
     return q
+
+# ── CRUD routes ────────────────────────────────────────────────────────────────
 
 @router.get("/entries", response_model=List[Entry])
 async def list_entries(
@@ -92,14 +103,24 @@ async def create_entry(body: EntryCreate, current_user: CurrentUser = Depends(ge
     return entry
 
 @router.put("/entries/{entry_id}", response_model=Entry)
-async def update_entry(entry_id: str, body: EntryUpdate, current_user: CurrentUser = Depends(get_current_user)):
-    existing = await db.db.entries.find_one({"id": entry_id, "user_id": current_user.firebase_uid}, {"_id": 0})
+async def update_entry(
+    entry_id: str,
+    body: EntryUpdate,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    existing = await db.db.entries.find_one(
+        {"id": entry_id, "user_id": current_user.firebase_uid}, {"_id": 0}
+    )
     if not existing:
         raise HTTPException(status_code=404, detail="Not found")
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if updates:
-        await db.db.entries.update_one({"id": entry_id, "user_id": current_user.firebase_uid}, {"$set": updates})
-    doc = await db.db.entries.find_one({"id": entry_id, "user_id": current_user.firebase_uid}, {"_id": 0})
+        await db.db.entries.update_one(
+            {"id": entry_id, "user_id": current_user.firebase_uid}, {"$set": updates}
+        )
+    doc = await db.db.entries.find_one(
+        {"id": entry_id, "user_id": current_user.firebase_uid}, {"_id": 0}
+    )
     return Entry(**doc)
 
 @router.delete("/entries/{entry_id}")
@@ -109,8 +130,14 @@ async def delete_entry(entry_id: str, current_user: CurrentUser = Depends(get_cu
         raise HTTPException(status_code=404, detail="Not found")
     return {"ok": True}
 
+# ── Summary routes ─────────────────────────────────────────────────────────────
+
 @router.get("/summary/monthly")
-async def monthly_summary(year: int = Query(...), month: int = Query(...), current_user: CurrentUser = Depends(get_current_user)):
+async def monthly_summary(
+    year: int = Query(...),
+    month: int = Query(...),
+    current_user: CurrentUser = Depends(get_current_user),
+):
     q = build_entries_query(current_user.firebase_uid, year=year, month=month)
     docs = await db.db.entries.find(q, {"_id": 0}).to_list(10000)
     result = {
@@ -123,8 +150,8 @@ async def monthly_summary(year: int = Query(...), month: int = Query(...), curre
         key = d["category"]
         s["by_category"].setdefault(key, {"income": 0.0, "expense": 0.0})
         s["by_category"][key][d["type"]] += d["amount"]
-    for scope in ("personal", "business"):
-        r = result[scope]
+    for scope_key in ("personal", "business"):
+        r = result[scope_key]
         r["net"] = r["income"] - r["expense"]
     totals = {
         "income": result["personal"]["income"] + result["business"]["income"],
@@ -135,7 +162,10 @@ async def monthly_summary(year: int = Query(...), month: int = Query(...), curre
     return result
 
 @router.get("/summary/yearly")
-async def yearly_summary(fy_start: int = Query(...), current_user: CurrentUser = Depends(get_current_user)):
+async def yearly_summary(
+    fy_start: int = Query(...),
+    current_user: CurrentUser = Depends(get_current_user),
+):
     q = build_entries_query(current_user.firebase_uid, fy_start=fy_start)
     docs = await db.db.entries.find(q, {"_id": 0}).to_list(100000)
     months = []
@@ -178,7 +208,14 @@ async def yearly_summary(fy_start: int = Query(...), current_user: CurrentUser =
     totals["total_expense"] = totals["personal_expense"] + totals["business_expense"]
     totals["total_net"] = totals["total_income"] - totals["total_expense"]
 
-    return {"fy_start": fy_start, "fy_label": f"FY {fy_start}-{str(fy_start+1)[-2:]}", "rows": rows, "totals": totals}
+    return {
+        "fy_start": fy_start,
+        "fy_label": f"FY {fy_start}-{str(fy_start+1)[-2:]}",
+        "rows": rows,
+        "totals": totals,
+    }
+
+# ── Export routes ──────────────────────────────────────────────────────────────
 
 @router.get("/export/csv")
 async def export_csv(
@@ -227,7 +264,6 @@ async def export_xlsx(
         ws.append([d["date"], d["scope"], d["type"], d["category"], round(d["amount"], 2), d.get("note", "")])
     for col_letter, width in zip(["A", "B", "C", "D", "E", "F"], [14, 12, 12, 28, 16, 40]):
         ws.column_dimensions[col_letter].width = width
-
     stream = io.BytesIO()
     wb.save(stream)
     stream.seek(0)
@@ -239,266 +275,381 @@ async def export_xlsx(
 
 
 # ════════════════════════════════════════════════════════════════════════════════
-# Receipt OCR + parsing — fully generic, zero bill-specific hardcodes
+# Receipt OCR + parsing
 # ════════════════════════════════════════════════════════════════════════════════
 
-# Generic receipt keywords used only to score OCR quality. These are domain
-# words that appear on virtually any bill (not tied to any specific vendor).
-SCORE_KW = [
+# ── Module-level constants ─────────────────────────────────────────────────────
+
+# Receipt keywords used only to score OCR quality.
+_SCORE_KW = [
     "total", "amount", "date", "invoice", "bill", "subtotal",
-    "gst", "cgst", "sgst", "qty", "rs", "tax", "price", "store",
-    "pharmacy", "thousand", "shop", "receipt", "cash", "paid",
-    "net", "due", "discount",
+    "gst", "cgst", "sgst", "qty", "rs", "tax", "price",
+    "receipt", "cash", "paid", "net", "due", "discount",
 ]
 
-# Score below this triggers the fallback engines (rotation scan + pytesseract).
-LOW_CONFIDENCE_THRESHOLD = 500
+# OCR score below this triggers rotation scan + pytesseract fallback.
+_LOW_CONFIDENCE = 500
 
+# Lines that start with these tokens are boilerplate — not merchant names.
+_SKIP_STARTS = (
+    "bill", "ship", "invoice", "date", "qty", "quantity", "name",
+    "time", "cashier", "item", "description", "amount", "subtotal",
+    "total", "cash", "po#", "due", "#", "rate", "terms", "gstin",
+    "routing", "account", "state", "bank", "payment", "gst", "cgst",
+    "sgst", "igst", "tax", "sl", "sr", "no.", "mob", "phone", "tel",
+    "email", "address", "city", "pin", "table", "order", "receipt",
+    "thank", "visit", "print", "page", "regd", "reg.", "fssai",
+    "store", "shop", "download", "app", "play", "google", "dl no",
+    "license", "licence", "pan", "tin", "cin",
+)
+
+_SKIP_PATTERNS = [
+    r"^\d+$",               # pure number
+    r"^\d{1,2}[:/]\d{2}",  # time like 21:26
+    r"^\W+$",               # only punctuation/symbols
+    r"^(www\.|http)",       # URL
+    r"^\d{4,}",             # starts with 4+ digits (codes, GSTINs)
+    r"^[A-Z0-9]{5,}\d{4,}", # alphanumeric codes
+]
+
+_MONTH_MAP = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    "january": 1, "february": 2, "march": 3, "april": 4, "june": 6,
+    "july": 7, "august": 8, "september": 9, "october": 10,
+    "november": 11, "december": 12,
+    "jan.": 1, "feb.": 2, "mar.": 3, "apr.": 4, "jun.": 6,
+    "jul.": 7, "aug.": 8, "sep.": 9, "oct.": 10, "nov.": 11, "dec.": 12,
+}
+
+# (regex, format_name) — tried in order, first valid date wins.
+_DATE_PATTERNS = [
+    (r"\b(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{4})\b", "dmy4"),
+    (r"\b(\d{4})[/\-\.](\d{1,2})[/\-\.](\d{1,2})\b", "ymd4"),
+    (r"\b(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2})\b",  "dmy2"),
+    (r"\b(\d{1,2})[\s\-/\.]+([A-Za-z]{3,9})[\s\-/\.,]+(\d{4})\b", "dMonY"),
+    (r"\b([A-Za-z]{3,9})[\s\-/\.]+(\d{1,2})[,\s]+(\d{4})\b", "Mdy"),
+    # Compact run-on 8-digit dates: DDMMYYYY or YYYYMMDD
+    (r"\b(\d{2})(\d{2})(\d{4})\b", "dmy4"),
+    (r"\b(\d{4})(\d{2})(\d{2})\b", "ymd4"),
+]
+
+_YEAR_EXCLUDE = frozenset(float(y) for y in range(1990, 2101))
+
+_WORD_TO_NUM = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
+    "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
+    "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40,
+    "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90,
+}
+
+# Generic keyword → category map (no vendor-specific names).
+_CATEGORY_KEYWORDS: list[tuple[str, str]] = [
+    (r"restaurant|cafe|coffee|tea|food|dining|meal|bakery|dhaba|"
+     r"sweets|juice|pizza|burger|biryani|thali|snack|tiffin|canteen",
+     "Food & Dining"),
+    (r"grocery|supermarket|kirana|mart|general\s+store|provision|"
+     r"vegetable|fruit|dairy|milk|bread|rice|flour|oil|masala",
+     "Groceries"),
+    (r"pharmacy|medical|medicine|hospital|clinic|doctor|lab|diagnostic|"
+     r"chemist|drug|surgical|health|wellness|optical|dental|ayush",
+     "Healthcare"),
+    (r"petrol|fuel|diesel|auto|cab|taxi|uber|ola|bus|train|metro|toll|"
+     r"parking|tyre|service\s+center|garage|transport|travel|commute",
+     "Transport"),
+    (r"electricity|water|gas|broadband|internet|wifi|mobile|recharge|"
+     r"dth|cable|telecom|utility|maintenance",
+     "Utilities"),
+    (r"cloth|apparel|garment|fashion|shoes|footwear|textile|boutique|"
+     r"mall|showroom|retail|amazon|flipkart|myntra",
+     "Shopping"),
+    (r"school|college|university|tuition|coaching|course|book|stationery|"
+     r"library|education|institute|academy|fees",
+     "Education"),
+    (r"cinema|theatre|theater|movie|film|game|entertainment|event|concert|"
+     r"club|recreation|sport|gym|fitness",
+     "Entertainment"),
+]
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _make_tmp_path(suffix: str) -> str:
+    """Return a unique temp-file path WITHOUT opening it.
+
+    NamedTemporaryFile on Windows holds an exclusive open handle that blocks
+    PyMuPDF and PIL from writing to the same path.  A plain uuid-based path
+    avoids this entirely.
+    """
+    return os.path.join(tempfile.gettempdir(), f"lp_{uuid.uuid4().hex}{suffix}")
+
+
+def _clean_ocr_text(text: str) -> str:
+    """Strip markdown fences and other LiteParse formatting artifacts before
+    the text is passed to the field extractors."""
+    # Remove fenced code blocks entirely (keep inner text)
+    text = re.sub(r"```[^\n]*\n(.*?)```", r"\1", text, flags=re.DOTALL)
+    # Remove stray ``` markers
+    text = re.sub(r"```[^\n]*", "", text)
+    # Remove markdown heading markers (keep the text)
+    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
+    # Remove table separator lines (|---|---|)
+    text = re.sub(r"^\s*\|?[\s\-|]+\|?\s*$", "", text, flags=re.MULTILINE)
+    # Collapse multiple blank lines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def _infer_category(note: str, raw_text: str) -> str:
+    """Return the best-matching category from _CATEGORY_KEYWORDS.
+    Falls back to 'Other'. Pure regex — no API calls."""
+    haystack = (note + " " + raw_text[:600]).lower()
+    for pattern, category in _CATEGORY_KEYWORDS:
+        if re.search(pattern, haystack, re.IGNORECASE):
+            return category
+    return "Other"
+
+
+def _try_parse_date(groups, fmt: str):
+    """Parse a regex match group tuple into (year, month, day) or None."""
+    try:
+        if fmt == "dmy4":
+            d, mo, y = int(groups[0]), int(groups[1]), int(groups[2])
+        elif fmt == "ymd4":
+            y, mo, d = int(groups[0]), int(groups[1]), int(groups[2])
+        elif fmt == "dmy2":
+            d, mo, y = int(groups[0]), int(groups[1]), 2000 + int(groups[2])
+        elif fmt == "dMonY":
+            d = int(groups[0])
+            mo = _MONTH_MAP.get(groups[1].lower().rstrip("."))
+            y = int(groups[2])
+            if mo is None:
+                return None
+        elif fmt == "Mdy":
+            mo = _MONTH_MAP.get(groups[0].lower().rstrip("."))
+            d = int(groups[1])
+            y = int(groups[2])
+            if mo is None:
+                return None
+        else:
+            return None
+        if 2000 <= y <= 2100 and 1 <= mo <= 12 and 1 <= d <= 31:
+            return (y, mo, d)
+    except Exception:
+        pass
+    return None
+
+
+def _date_from_line(line: str):
+    """Try every date pattern on a single line; return (y, m, d) or None."""
+    for pat, fmt in _DATE_PATTERNS:
+        m = re.search(pat, line, re.IGNORECASE)
+        if m:
+            result = _try_parse_date(m.groups(), fmt)
+            if result:
+                return result
+    return None
+
+
+# ── Main parser ────────────────────────────────────────────────────────────────
 
 def extract_receipt_data_from_text(text: str) -> dict:
-    lines = [l.strip() for l in text.split('\n') if l.strip()]
+    """Extract note, date, amount, type, scope, category from raw OCR text."""
+    text = _clean_ocr_text(text)
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
     text_lower = text.lower()
 
     # ── 1. Merchant / Note ────────────────────────────────────────────────────
-    # Scan lines top-to-bottom, skip boilerplate/label lines, take the first
-    # meaningful name-like line. Generic — no vendor-specific names.
-    SKIP_STARTS = (
-        'bill', 'ship', 'invoice', 'date', 'qty', 'quantity', 'name',
-        'time', 'cashier', 'item', 'description', 'amount', 'subtotal',
-        'total', 'cash', 'po#', 'due', '#', 'rate', 'terms', 'gstin',
-        'routing', 'account', 'state', 'bank', 'payment', 'gst', 'cgst',
-        'sgst', 'igst', 'tax', 'sl', 'sr', 'no.', 'mob', 'phone', 'tel',
-        'email', 'address', 'city', 'pin', 'table', 'order', 'receipt',
-        'thank', 'visit', 'print', 'page', 'regd', 'reg.', 'fssai',
-        'store', 'shop', 'download', 'app', 'play', 'google', 'dl no',
-        'license', 'licence', 'pan', 'tin', 'cin',
-    )
-    SKIP_PATTERNS = [
-        r'^\d+$',               # pure number
-        r'^\d{1,2}[:/]\d{2}',  # time like 21:26
-        r'^\W+$',               # only punctuation/symbols
-        r'^(www\.|http)',       # URL
-        r'^\d{4,}',             # starts with 4+ digits (codes, GSTINs)
-        r'^[A-Z0-9]{5,}\d{4,}', # alphanumeric codes
-    ]
-
-    note = ''
+    note = ""
     for line in lines:
-        cleaned = re.sub(r'[^a-zA-Z0-9\s&/\-]', '', line).strip()
+        cleaned = re.sub(r"[^a-zA-Z0-9\s&/\-]", "", line).strip()
         cl = cleaned.lower()
         alpha_chars = sum(1 for c in cleaned if c.isalpha())
         if (
             cleaned
             and len(cleaned) > 3
             and alpha_chars >= 3
-            and not cl.startswith(SKIP_STARTS)
-            and not any(re.search(p, cleaned) for p in SKIP_PATTERNS)
+            and not cl.startswith(_SKIP_STARTS)
+            and not any(re.search(p, cleaned) for p in _SKIP_PATTERNS)
         ):
             note = cleaned[:80]
             break
-
     if not note:
-        note = 'Imported Receipt'
+        note = "Imported Receipt"
 
-    # ── 2. Date Extraction ────────────────────────────────────────────────────
-    MONTH_MAP = {
-        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
-        'january': 1, 'february': 2, 'march': 3, 'april': 4, 'june': 6,
-        'july': 7, 'august': 8, 'september': 9, 'october': 10,
-        'november': 11, 'december': 12,
-        'jan.': 1, 'feb.': 2, 'mar.': 3, 'apr.': 4, 'jun.': 6,
-        'jul.': 7, 'aug.': 8, 'sep.': 9, 'oct.': 10, 'nov.': 11, 'dec.': 12,
-    }
-    DATE_PATTERNS = [
-        (r'\b(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{4})\b', 'dmy4'),
-        (r'\b(\d{4})[/\-\.](\d{1,2})[/\-\.](\d{1,2})\b', 'ymd4'),
-        (r'\b(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2})\b',  'dmy2'),
-        (r'\b(\d{1,2})[\s\-/\.]+([A-Za-z]{3,9})[\s\-/\.,]+(\d{4})\b', 'dMonY'),
-        (r'\b([A-Za-z]{3,9})[\s\-/\.]+(\d{1,2})[,\s]+(\d{4})\b', 'Mdy'),
-    ]
-
-    def _try_parse(g, fmt):
-        try:
-            if fmt == 'dmy4':   d, mo, y = int(g[0]), int(g[1]), int(g[2])
-            elif fmt == 'ymd4': y, mo, d = int(g[0]), int(g[1]), int(g[2])
-            elif fmt == 'dmy2': d, mo, y = int(g[0]), int(g[1]), 2000 + int(g[2])
-            elif fmt == 'dMonY':
-                d = int(g[0]); mo = MONTH_MAP.get(g[1].lower().rstrip('.')); y = int(g[2])
-                if mo is None: return None
-            elif fmt == 'Mdy':
-                mo = MONTH_MAP.get(g[0].lower().rstrip('.')); d = int(g[1]); y = int(g[2])
-                if mo is None: return None
-            else: return None
-            if 2000 <= y <= 2100 and 1 <= mo <= 12 and 1 <= d <= 31:
-                return (y, mo, d)
-        except Exception: pass
-        return None
-
-    def _date_from_line(line):
-        for pat, fmt in DATE_PATTERNS:
-            m = re.search(pat, line, re.IGNORECASE)
-            if m:
-                r = _try_parse(m.groups(), fmt)
-                if r: return r
-        return None
-
-    date_str = None
-    # Priority 1: invoice/bill date lines — skip "due date" lines
-    inv_lines  = [l for l in lines
-                  if re.search(r'invoice\s*date|bill\s*date|dt[\.:)]', l, re.IGNORECASE)
-                  and not re.search(r'\bdue\b', l, re.IGNORECASE)]
-    # Priority 2: any "date" label line (not "due date")
-    gen_lines  = [l for l in lines
-                  if re.search(r'\bdate\b|dt[\.:)]', l, re.IGNORECASE)
-                  and l not in inv_lines
-                  and not re.search(r'due\s*date', l, re.IGNORECASE)]
-    # Priority 3: all other lines
+    # ── 2. Date ───────────────────────────────────────────────────────────────
+    # Priority 1 → invoice/bill date lines (not "due date")
+    inv_lines = [l for l in lines
+                 if re.search(r"invoice\s*date|bill\s*date|dt[\.:)]", l, re.IGNORECASE)
+                 and not re.search(r"\bdue\b", l, re.IGNORECASE)]
+    # Priority 2 → any generic "date" line (not "due date")
+    gen_lines = [l for l in lines
+                 if re.search(r"\bdate\b|dt[\.:)]", l, re.IGNORECASE)
+                 and l not in inv_lines
+                 and not re.search(r"due\s*date", l, re.IGNORECASE)]
+    # Priority 3 → everything else
     rest_lines = [l for l in lines if l not in inv_lines and l not in gen_lines]
 
-    for line in (inv_lines + gen_lines + rest_lines):
-        r = _date_from_line(line)
-        if r:
-            y, mo, d = r
-            date_str = f'{y:04d}-{mo:02d}-{d:02d}'
+    date_str = None
+    for line in inv_lines + gen_lines + rest_lines:
+        result = _date_from_line(line)
+        if result:
+            y, mo, d = result
+            date_str = f"{y:04d}-{mo:02d}-{d:02d}"
             break
-
     if not date_str:
-        date_str = datetime.now().strftime('%Y-%m-%d')
+        date_str = datetime.now().strftime("%Y-%m-%d")
 
-    # ── 3. Amount Extraction ──────────────────────────────────────────────────
-    # Cascade: written words → explicit total label → subtotal+tax → largest
-    # decimal on total/cash lines → largest decimal anywhere → integer fallback.
-    YEAR_EXCLUDE = {float(y) for y in range(1990, 2101)}
+    # ── 3. Amount ─────────────────────────────────────────────────────────────
+    # Cascade: word amounts → explicit total label → subtotal+tax →
+    # total-line decimal → any decimal → integer fallback.
+    # Lines that contain "%" are always skipped to avoid grabbing GST rates.
 
     amount = 0.0
 
-    # Step 0: written-word amounts ("five thousand", "15 thousand" etc.)
-    WORD_MAP = {
-        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-        'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
-        'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18,
-        'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40,
-        'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
-    }
+    # Step 0 — written-word thousands ("five thousand", "15 thousand 500")
     _wm = re.search(
-        r'\b(' + '|'.join(WORD_MAP) + r'|\d+)\s+thousand(?:\s+(?:and\s+)?(\d+))?',
-        text_lower
+        r"\b(" + "|".join(_WORD_TO_NUM) + r"|\d+)\s+thousand(?:\s+(?:and\s+)?(\d+))?",
+        text_lower,
     )
     if _wm:
         try:
-            base = WORD_MAP.get(_wm.group(1)) or float(_wm.group(1))
+            base = _WORD_TO_NUM.get(_wm.group(1)) or float(_wm.group(1))
             remainder = float(_wm.group(2)) if _wm.group(2) else 0
             amount = base * 1000 + remainder
-        except Exception: pass
+        except Exception:
+            pass
 
-    # Also: plain digit + "thousand" / ",000"
     if amount == 0.0:
-        _th = re.search(r'\b(\d[\d,]*)\s*(?:thousand)\b', text_lower)
+        _th = re.search(r"\b(\d[\d,]*)\s*thousand\b", text_lower)
         if _th:
-            try: amount = float(_th.group(1).replace(',', '')) * 1000
-            except Exception: pass
+            try:
+                amount = float(_th.group(1).replace(",", "")) * 1000
+            except Exception:
+                pass
 
     if amount == 0.0:
-        # Step 1: explicit INVOICE TOTAL / GRAND TOTAL / BALANCE DUE label
+        # Step 1 — explicit grand/invoice/payable total label
         for i, line in enumerate(lines):
             if re.search(
-                r'invoice\s*total|grand\s*total|net\s*total|net\s*amount|'
-                r'total\s*amount|payable\s*amount|amount\s*payable|balance\s*due',
-                line, re.IGNORECASE
+                r"invoice\s*total|grand\s*total|net\s*total|net\s*amount|"
+                r"total\s*amount|payable\s*amount|amount\s*payable|balance\s*due",
+                line, re.IGNORECASE,
             ):
-                block = ' '.join(lines[i:i+3])
+                block = " ".join(lines[i:i + 3])
                 candidates = []
-                for n in re.findall(r'[\d,]+\.\d{2}', block):
+                for n in re.findall(r"[\d,]+\.\d{2}", block):
                     try:
-                        v = float(n.replace(',', ''))
-                        if 1.0 <= v <= 500000.0 and v not in YEAR_EXCLUDE:
+                        v = float(n.replace(",", ""))
+                        if 1.0 <= v <= 500000.0 and v not in _YEAR_EXCLUDE:
                             candidates.append(v)
-                    except ValueError: pass
+                    except ValueError:
+                        pass
                 if candidates:
                     amount = max(candidates)
                     break
 
     if amount == 0.0:
-        # Step 2: subtotal + GST/tax + round-off
-        subtotal = 0.0; tax_amount = 0.0; round_off = 0.0
+        # Step 2 — subtotal + GST + round-off
+        subtotal = tax_amount = round_off = 0.0
         for i, line in enumerate(lines):
-            if re.search(r'\bsub\s*-?\s*total\b', line, re.IGNORECASE) and subtotal == 0.0:
-                block = ' '.join(lines[i:i+8])
-                m = re.search(r'([\d,]+\.\d{2})', block)
+            if re.search(r"\bsub\s*-?\s*total\b", line, re.IGNORECASE) and subtotal == 0.0:
+                block = " ".join(lines[i:i + 8])
+                m = re.search(r"([\d,]+\.\d{2})", block)
                 if m:
-                    try: subtotal = float(m.group(1).replace(',', ''))
-                    except ValueError: pass
-        for i, line in enumerate(lines):
-            if re.search(r'\b(gst|cgst|sgst|igst|vat|tax)\b', line, re.IGNORECASE) \
-               and not re.search(r'\bsub\b', line, re.IGNORECASE):
-                block = ' '.join(lines[i:i+8])
-                for n in re.findall(r'([\d,]+\.\d{2})', block):
                     try:
-                        v = float(n.replace(',', ''))
-                        if v not in {2.5, 5.0, 9.0, 12.0, 18.0, 28.0} and v != subtotal:
-                            tax_amount += v; break
-                    except ValueError: pass
+                        subtotal = float(m.group(1).replace(",", ""))
+                    except ValueError:
+                        pass
         for i, line in enumerate(lines):
-            if re.search(r'\bround\b', line, re.IGNORECASE):
-                block = ' '.join(lines[i:i+4])
-                m = re.search(r'([+-]?[\d,]+\.\d{2}|[+-]?\d+)', block)
+            if re.search(r"\b(gst|cgst|sgst|igst|vat|tax)\b", line, re.IGNORECASE) \
+               and not re.search(r"\bsub\b", line, re.IGNORECASE):
+                block = " ".join(lines[i:i + 8])
+                for n in re.findall(r"([\d,]+\.\d{2})", block):
+                    try:
+                        v = float(n.replace(",", ""))
+                        if v not in {2.5, 5.0, 9.0, 12.0, 18.0, 28.0} and v != subtotal:
+                            tax_amount += v
+                            break
+                    except ValueError:
+                        pass
+        for i, line in enumerate(lines):
+            if re.search(r"\bround\b", line, re.IGNORECASE):
+                block = " ".join(lines[i:i + 4])
+                m = re.search(r"([+-]?[\d,]+\.\d{2}|[+-]?\d+)", block)
                 if m:
                     try:
                         v = float(m.group(1))
-                        if abs(v) < 10: round_off = v
-                    except ValueError: pass
+                        if abs(v) < 10:
+                            round_off = v
+                    except ValueError:
+                        pass
         if subtotal > 0:
             amount = round(subtotal + tax_amount + round_off, 2)
 
     if amount == 0.0:
-        # Step 3: largest decimal on any total/cash/paid/net/payable line
+        # Step 3 — largest decimal on total/cash/paid/net/payable lines
         for line in lines:
-            if re.search(r'\btotal\b|\bcash\b|\bpaid\b|\bnet\b|\bpayable\b', line, re.IGNORECASE):
-                for n in re.findall(r'[\d,]+\.\d{2}', line):
+            if "%" in line:
+                continue
+            if re.search(r"\btotal\b|\bcash\b|\bpaid\b|\bnet\b|\bpayable\b", line, re.IGNORECASE):
+                for n in re.findall(r"[\d,]+\.\d{2}", line):
                     try:
-                        v = float(n.replace(',', ''))
-                        if 1.0 <= v <= 500000.0 and v not in YEAR_EXCLUDE and v > amount:
+                        v = float(n.replace(",", ""))
+                        if 1.0 <= v <= 500000.0 and v not in _YEAR_EXCLUDE and v > amount:
                             amount = v
-                    except ValueError: pass
+                    except ValueError:
+                        pass
 
     if amount == 0.0:
-        # Step 4: largest decimal anywhere in text (ignoring percentage rows)
+        # Step 4 — largest decimal anywhere (skip percentage lines)
         for line in lines:
-            for n in re.findall(r'[\d,]+\.\d{2}', line):
+            if "%" in line:
+                continue
+            for n in re.findall(r"[\d,]+\.\d{2}", line):
                 try:
-                    v = float(n.replace(',', ''))
-                    if 1.0 <= v <= 500000.0 and v not in YEAR_EXCLUDE and v > amount:
+                    v = float(n.replace(",", ""))
+                    if 1.0 <= v <= 500000.0 and v not in _YEAR_EXCLUDE and v > amount:
                         amount = v
-                except ValueError: pass
+                except ValueError:
+                    pass
 
     if amount == 0.0:
-        # Step 5: integer amounts written without decimals (e.g. "1200", "15000")
+        # Step 5 — integer amounts with no decimal (e.g. "1200", "15000")
         for line in lines:
-            for n in re.findall(r'\b(\d{3,6})\b', line):
+            if "%" in line:
+                continue
+            for n in re.findall(r"\b(\d{3,6})\b", line):
                 try:
                     v = float(n)
-                    if 1.0 <= v <= 500000.0 and v not in YEAR_EXCLUDE and v > amount:
+                    if 1.0 <= v <= 500000.0 and v not in _YEAR_EXCLUDE and v > amount:
                         amount = v
-                except ValueError: pass
+                except ValueError:
+                    pass
+
+    category = _infer_category(note, text)
 
     return {
-        'note': note,
-        'date': date_str,
-        'amount': amount,
-        'type': 'expense',
-        'scope': 'personal',
-        'category': 'Other',
+        "note": note,
+        "date": date_str,
+        "amount": amount,
+        "type": "expense",
+        "scope": "personal",
+        "category": category,
     }
 
 
-# ── OCR helpers ────────────────────────────────────────────────────────────────
+# ── OCR pipeline ───────────────────────────────────────────────────────────────
 
 def _load_candidate_images(tmp_path: str, suffix: str, tmp_clean_files: list) -> list:
-    """Load images from a PDF (ALL pages, embedded + rasterised at 300 DPI) or a
-    single image file. EXIF rotation is applied first so downstream stages always
-    see upright images."""
+    """Load images from a PDF (all pages: embedded + rasterised at 300 DPI) or
+    a single image file. EXIF rotation is applied so downstream stages always
+    see upright images.
+
+    Uses _make_tmp_path() (a plain path string, never an open handle) to avoid
+    the Windows NamedTemporaryFile exclusive-lock problem.
+    """
     from PIL import Image, ImageOps
 
     candidate_imgs = []
@@ -510,34 +661,35 @@ def _load_candidate_images(tmp_path: str, suffix: str, tmp_clean_files: list) ->
             doc = fitz.open(tmp_path)
             for page_idx in range(len(doc)):
                 page = doc[page_idx]
-                embedded = page.get_images(full=True)
-                if embedded:
-                    for img_ref in embedded:
+                # Embedded images (e.g. JPEG stored inside the PDF)
+                for img_ref in page.get_images(full=True):
+                    try:
+                        base_image = doc.extract_image(img_ref[0])
+                        path = _make_tmp_path(".jpg")
+                        with open(path, "wb") as f:
+                            f.write(base_image["image"])
+                        tmp_clean_files.append(path)
+                        img = Image.open(path)
                         try:
-                            base_image = doc.extract_image(img_ref[0])
-                            tmp_img = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-                            tmp_img.write(base_image["image"])
-                            tmp_img.close()
-                            tmp_clean_files.append(tmp_img.name)
-                            img = Image.open(tmp_img.name)
-                            try:
-                                img = ImageOps.exif_transpose(img)
-                            except Exception:
-                                pass
-                            candidate_imgs.append(img)
+                            img = ImageOps.exif_transpose(img)
                         except Exception:
                             pass
+                        candidate_imgs.append(img)
+                    except Exception:
+                        pass
+                # Full-page raster at 300 DPI (catches text/vector PDFs too)
                 pix = page.get_pixmap(dpi=300)
-                tmp_pg = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-                pix.save(tmp_pg.name)
-                tmp_clean_files.append(tmp_pg.name)
-                candidate_imgs.append(Image.open(tmp_pg.name))
+                path = _make_tmp_path(".png")
+                pix.save(path)          # file not open → no Windows lock
+                tmp_clean_files.append(path)
+                candidate_imgs.append(Image.open(path))
+            doc.close()
         except Exception:
             pass
+
     elif ext in [".png", ".jpg", ".jpeg", ".bmp", ".webp"]:
         try:
             img = Image.open(tmp_path)
-            # EXIF correction first — fixes phone photos saved sideways
             try:
                 img = ImageOps.exif_transpose(img)
             except Exception:
@@ -550,7 +702,7 @@ def _load_candidate_images(tmp_path: str, suffix: str, tmp_clean_files: list) ->
 
 
 def _auto_deskew(pil_img) -> "Image.Image":
-    """Auto-deskew a tilted scan using OpenCV minAreaRect angle detection."""
+    """Auto-deskew a tilted scan using OpenCV minAreaRect."""
     try:
         import cv2
         import numpy as np
@@ -560,29 +712,20 @@ def _auto_deskew(pil_img) -> "Image.Image":
         if coords is None:
             return pil_img
         angle = cv2.minAreaRect(coords)[-1]
-        if angle < -45:
-            angle = -(90 + angle)
-        else:
-            angle = -angle
+        angle = -(90 + angle) if angle < -45 else -angle
         if abs(angle) < 0.5:
             return pil_img
         h, w = arr.shape[:2]
-        center = (w // 2, h // 2)
-        m = cv2.getRotationMatrix2D(center, angle, 1.0)
-        rotated = cv2.warpAffine(arr, m, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+        M = cv2.getRotationMatrix2D((w // 2, h // 2), angle, 1.0)
+        rotated = cv2.warpAffine(arr, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
         return Image.fromarray(rotated)
     except Exception:
         return pil_img
 
 
 def _preprocess_image(pil_img) -> list:
-    """Return multiple preprocessed variants of an image for OCR.
-
-    Pipeline (applied to every candidate image):
-      1. Auto-deskew
-      2. Upscale to a minimum 1200px on the long edge (~300 DPI equivalent)
-      3. Grayscale, contrast boost, CLAHE + Otsu binarization, colour isolation
-    """
+    """Return up to 4 preprocessed variants of an image for OCR:
+    grayscale, contrast-boosted, CLAHE+Otsu binary, colour-channel isolation."""
     from PIL import Image, ImageEnhance
     import numpy as np
 
@@ -590,17 +733,13 @@ def _preprocess_image(pil_img) -> list:
     try:
         gray = pil_img.convert("L")
         w, h = gray.size
-
-        # Upscale small images BEFORE any downstream variant is produced so
-        # every path benefits from the resolution bump.
+        # Upscale small images to at least 1200px on the long edge
         if max(w, h) < 1200:
             scale = 1200 / max(w, h)
             gray = gray.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
-
-        # Auto-deskew fixes tilted scans
         gray = _auto_deskew(gray)
 
-        # Variant 1: plain grayscale (good for clean laser prints)
+        # Variant 1: plain grayscale
         results.append(gray)
 
         # Variant 2: contrast-boosted (helps faded thermal receipts)
@@ -609,7 +748,7 @@ def _preprocess_image(pil_img) -> list:
         except Exception:
             pass
 
-        # Variant 3: OpenCV CLAHE + Otsu binarization (best for low-contrast scans)
+        # Variant 3: CLAHE + Otsu binarization (best for low-contrast scans)
         try:
             import cv2
             arr = np.array(gray, dtype=np.uint8)
@@ -619,7 +758,7 @@ def _preprocess_image(pil_img) -> list:
             arr_d = cv2.fastNlMeansDenoising(arr_b, h=10)
             results.append(Image.fromarray(arr_d))
         except ImportError:
-            pass   # opencv not installed — skip
+            pass
         except Exception:
             pass
 
@@ -627,7 +766,7 @@ def _preprocess_image(pil_img) -> list:
         try:
             if pil_img.mode in ("RGB", "RGBA"):
                 arr_c = np.array(pil_img.convert("RGB")).astype(np.float32)
-                r_c, g_c, b_c = arr_c[:,:,0], arr_c[:,:,1], arr_c[:,:,2]
+                r_c, g_c, b_c = arr_c[:, :, 0], arr_c[:, :, 1], arr_c[:, :, 2]
                 iso = np.clip(255 - (b_c - r_c) * 2, 0, 255).astype(np.uint8)
                 results.append(Image.fromarray(iso))
         except Exception:
@@ -640,14 +779,14 @@ def _preprocess_image(pil_img) -> list:
 
 
 def _score_ocr_text(text: str) -> int:
-    """Score OCR output: prefer longer text with more receipt keywords."""
+    """Score OCR output quality: longer text with more receipt keywords scores higher."""
     l_txt = text.lower()
-    kw_hits = sum(1 for k in SCORE_KW if k in l_txt)
-    return len(text.strip()) + (kw_hits * 300)
+    kw_hits = sum(1 for k in _SCORE_KW if k in l_txt)
+    return len(text.strip()) + kw_hits * 300
 
 
-def _ocr_liteparse(path: str, parser) -> str:
-    """Run the LiteParse engine on an image path and return its text."""
+def _ocr_with_liteparse(path: str, parser) -> str:
+    """Run LiteParse on an image path and return the extracted text."""
     try:
         res = parser.parse(path)
         return getattr(res, "markdown", "") or getattr(res, "text", "") or str(res)
@@ -655,8 +794,8 @@ def _ocr_liteparse(path: str, parser) -> str:
         return ""
 
 
-def _ocr_tesseract(pil_img) -> str:
-    """Run pytesseract as a second OCR engine (fallback)."""
+def _ocr_with_tesseract(pil_img) -> str:
+    """Run pytesseract as a fallback OCR engine (optional dependency)."""
     try:
         import pytesseract
         return pytesseract.image_to_string(pil_img)
@@ -664,32 +803,30 @@ def _ocr_tesseract(pil_img) -> str:
         return ""
 
 
-def _merge_ocr_texts(*texts) -> str:
+def _merge_ocr_texts(*texts: str) -> str:
     """Merge OCR output from multiple engines, de-duplicating identical lines."""
-    seen = set()
+    seen: set = set()
     merged = []
     for t in texts:
         if not t:
             continue
         for line in t.split("\n"):
             s = line.strip()
-            if not s:
-                continue
-            key = s.lower()
-            if key not in seen:
-                seen.add(key)
+            if s and s.lower() not in seen:
+                seen.add(s.lower())
                 merged.append(s)
     return "\n".join(merged)
 
 
 def _ocr_receipt(tmp_path: str, suffix: str, tmp_clean_files: list) -> str:
-    """Full OCR pipeline.
+    """Full OCR pipeline (LiteParse-only, no API keys):
 
-    Order:
-      1. Load every candidate image (all PDF pages), EXIF-corrected first.
-      2. Preprocess (deskew, 300 DPI upscale, CLAHE, Otsu) and OCR with LiteParse.
-      3. If confidence is low (< 500 chars), try a 4-angle rotation scan.
-      4. If still low, run pytesseract and merge its output.
+    Stage 1 — Preprocess (deskew, upscale, CLAHE, Otsu) then OCR with LiteParse.
+    Stage 2 — If score < threshold, try 90/180/270° rotations.
+    Stage 3 — If still low, merge with pytesseract output (if installed).
+
+    All temp files are created via _make_tmp_path() to avoid Windows file-lock
+    errors that occur with NamedTemporaryFile.
     """
     from liteparse import LiteParse
 
@@ -701,53 +838,54 @@ def _ocr_receipt(tmp_path: str, suffix: str, tmp_clean_files: list) -> str:
     best_text = ""
     best_score = -1
 
-    def _save_tmp(img) -> str:
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-        img.save(tmp.name)
-        tmp.close()
-        tmp_clean_files.append(tmp.name)
-        return tmp.name
+    def _save_and_ocr(img) -> tuple[str, int]:
+        """Save PIL image to a fresh temp path, OCR it, return (text, score)."""
+        path = _make_tmp_path(".jpg")
+        img.save(path)                  # No open handle → PIL writes cleanly
+        tmp_clean_files.append(path)
+        text = _ocr_with_liteparse(path, parser)
+        return text, _score_ocr_text(text)
 
-    # Stage 1: EXIF-corrected, preprocessed images (no rotation)
+    # Stage 1: preprocessed variants at original orientation
     for img in candidate_imgs:
         for variant in _preprocess_image(img):
-            text = _ocr_liteparse(_save_tmp(variant), parser)
-            s = _score_ocr_text(text)
-            if s > best_score:
-                best_score, best_text = s, text
+            text, score = _save_and_ocr(variant)
+            if score > best_score:
+                best_score, best_text = score, text
 
-    # Stage 2: low confidence → 4-angle rotation scan
-    if best_score < LOW_CONFIDENCE_THRESHOLD:
+    # Stage 2: rotation scan when confidence is low
+    if best_score < _LOW_CONFIDENCE:
         for img in candidate_imgs:
             for rot in (90, 180, 270):
-                r_img = img.rotate(rot, expand=True)
-                for variant in _preprocess_image(r_img):
-                    text = _ocr_liteparse(_save_tmp(variant), parser)
-                    s = _score_ocr_text(text)
-                    if s > best_score:
-                        best_score, best_text = s, text
+                rotated = img.rotate(rot, expand=True)
+                for variant in _preprocess_image(rotated):
+                    text, score = _save_and_ocr(variant)
+                    if score > best_score:
+                        best_score, best_text = score, text
 
-    # Stage 3: pytesseract fallback + merge when LiteParse still looks weak
-    if best_score < LOW_CONFIDENCE_THRESHOLD:
+    # Stage 3: pytesseract merge when LiteParse is still weak
+    if best_score < _LOW_CONFIDENCE:
         for img in candidate_imgs:
-            t = _ocr_tesseract(img)
+            t = _ocr_with_tesseract(img)
             if t and t.strip():
                 merged = _merge_ocr_texts(best_text, t)
-                s = _score_ocr_text(merged)
-                if s > best_score:
-                    best_score, best_text = s, merged
+                score = _score_ocr_text(merged)
+                if score > best_score:
+                    best_score, best_text = score, merged
 
     return best_text
 
+
+# ── Import endpoint ────────────────────────────────────────────────────────────
 
 @router.post("/entries/import")
 async def import_receipt(
     file: UploadFile = File(...),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    """Upload a receipt image/PDF, OCR it, and auto-save it as an expense entry."""
-    tmp_path = None
-    tmp_clean_files = []
+    """Upload a receipt image/PDF, OCR it with LiteParse, and auto-save the
+    extracted data as an expense entry."""
+    tmp_clean_files: list[str] = []
 
     try:
         suffix = os.path.splitext(file.filename or "")[1].lower() or ".jpg"
@@ -755,10 +893,10 @@ async def import_receipt(
         if not content:
             raise HTTPException(status_code=400, detail="Empty file")
 
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-        tmp.write(content)
-        tmp.close()
-        tmp_path = tmp.name
+        # Write upload to a plain path — no open handle (Windows-safe)
+        tmp_path = _make_tmp_path(suffix)
+        with open(tmp_path, "wb") as f:
+            f.write(content)
         tmp_clean_files.append(tmp_path)
 
         text = _ocr_receipt(tmp_path, suffix, tmp_clean_files)
@@ -769,21 +907,21 @@ async def import_receipt(
 
         entry_dict = {
             "user_id": current_user.firebase_uid,
-            "date": parsed["date"],
-            "amount": parsed["amount"],
-            "type": parsed.get("type", "expense"),
-            "scope": parsed.get("scope", "personal"),
+            "date":     parsed["date"],
+            "amount":   parsed["amount"],
+            "type":     parsed.get("type", "expense"),
+            "scope":    parsed.get("scope", "personal"),
             "category": parsed.get("category", "Other"),
-            "note": parsed.get("note", ""),
+            "note":     parsed.get("note", ""),
         }
 
-        dup_filter = {
+        # Skip duplicate if same date + amount + note already exists
+        existing = await db.db.entries.find_one({
             "user_id": current_user.firebase_uid,
-            "date": entry_dict["date"],
-            "amount": entry_dict["amount"],
-            "note": entry_dict["note"],
-        }
-        existing = await db.db.entries.find_one(dup_filter)
+            "date":    entry_dict["date"],
+            "amount":  entry_dict["amount"],
+            "note":    entry_dict["note"],
+        })
         if existing:
             existing["id"] = existing.get("id", str(existing.get("_id", "")))
             existing.pop("_id", None)
@@ -792,6 +930,7 @@ async def import_receipt(
         entry = Entry(**entry_dict)
         await db.db.entries.insert_one(entry.model_dump())
         return entry
+
     except HTTPException:
         raise
     except Exception as e:
@@ -799,7 +938,7 @@ async def import_receipt(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         for p in tmp_clean_files:
-            if os.path.exists(p):
+            if p and os.path.exists(p):
                 try:
                     os.remove(p)
                 except Exception:
