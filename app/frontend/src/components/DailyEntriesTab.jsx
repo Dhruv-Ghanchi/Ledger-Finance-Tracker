@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, Search } from "lucide-react";
+import { Pencil, Trash2, Search, ChevronUp, ChevronDown } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -23,9 +23,10 @@ export default function DailyEntriesTab({ entries, categories, onEdit, onDeleted
   const [q, setQ] = useState("");
   const [scope, setScope] = useState("all");
   const [type, setType] = useState("all");
+  const [sortDir, setSortDir] = useState("desc"); // 'asc' or 'desc'
 
   const filtered = useMemo(() => {
-    return entries.filter((e) => {
+    let result = entries.filter((e) => {
       if (scope !== "all" && e.scope !== scope) return false;
       if (type !== "all" && e.type !== type) return false;
       if (q) {
@@ -34,7 +35,20 @@ export default function DailyEntriesTab({ entries, categories, onEdit, onDeleted
       }
       return true;
     });
-  }, [entries, q, scope, type]);
+    
+    // Sort by date
+    result.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortDir === "asc" ? dateA - dateB : dateB - dateA;
+    });
+    
+    return result;
+  }, [entries, q, scope, type, sortDir]);
+
+  const toggleSort = () => {
+    setSortDir(prev => prev === "asc" ? "desc" : "asc");
+  };
 
   const del = async (id) => {
     try {
@@ -88,7 +102,12 @@ export default function DailyEntriesTab({ entries, categories, onEdit, onDeleted
         <Table className="data-table">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[120px]">Date</TableHead>
+              <TableHead className="w-[120px] cursor-pointer select-none" onClick={toggleSort}>
+                <div className="flex items-center gap-1">
+                  Date
+                  {sortDir === "desc" ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                </div>
+              </TableHead>
               <TableHead>Scope</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Category</TableHead>
@@ -119,9 +138,9 @@ export default function DailyEntriesTab({ entries, categories, onEdit, onDeleted
                 </TableCell>
                 <TableCell className="text-xs uppercase tracking-widest">
                   {e.type === "income" ? (
-                    <span className="text-business">▲ Income</span>
+                    <span className="text-green-600">▲ Income</span>
                   ) : (
-                    <span className="text-personal">▼ Expense</span>
+                    <span className="text-destructive">▼ Expense</span>
                   )}
                 </TableCell>
                 <TableCell className="text-sm">{e.category}</TableCell>
@@ -130,7 +149,7 @@ export default function DailyEntriesTab({ entries, categories, onEdit, onDeleted
                 </TableCell>
                 <TableCell
                   className={`text-right font-mono font-semibold ${
-                    e.type === "income" ? "text-business" : "text-foreground"
+                    e.type === "income" ? "text-green-600" : "text-foreground"
                   }`}
                 >
                   {e.type === "expense" ? "-" : "+"}

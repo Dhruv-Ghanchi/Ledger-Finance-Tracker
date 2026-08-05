@@ -144,10 +144,6 @@ export default function PinLock() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-
-        <div className="text-[11px] uppercase tracking-widest text-muted-foreground text-center mt-6">
-          v1 · single-user offline ledger
-        </div>
       </div>
     </div>
   );

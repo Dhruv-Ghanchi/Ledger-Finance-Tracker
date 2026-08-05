@@ -7,8 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { Loader2, Lock } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AddEntryDialog({ open, onOpenChange, categories, onSaved, editing }) {
+  const { dbUser } = useAuth();
+  const isFreeUser = dbUser?.plan === "free" || dbUser?.plan === "trial";
   const today = new Date().toISOString().slice(0, 10);
   const [scope, setScope] = useState("personal");
   const [type, setType] = useState("expense");
@@ -38,13 +42,16 @@ export default function AddEntryDialog({ open, onOpenChange, categories, onSaved
   }, [editing, open]);
 
   const filteredCats = useMemo(
-    () => categories.filter((c) => c.type === type).sort((a, b) => a.name.localeCompare(b.name)),
-    [categories, type]
+    () => categories
+      .filter((c) => c.type === type)
+      .filter((c) => !isFreeUser || c.is_preset)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [categories, type, isFreeUser]
   );
 
   useEffect(() => {
     if (category && !filteredCats.find((c) => c.name === category)) setCategory("");
-  }, [type, filteredCats]); // eslint-disable-line
+  }, [type, filteredCats, isFreeUser]); // eslint-disable-line
 
   const save = async () => {
     if (!amount || Number(amount) <= 0) return toast.error("Enter a valid amount");
@@ -53,14 +60,15 @@ export default function AddEntryDialog({ open, onOpenChange, categories, onSaved
     setBusy(true);
     try {
       const payload = { date, amount: Number(amount), type, scope, category, note };
-      if (editing) {
-        await api.put(`/entries/${editing.id}`, payload);
+      let res;
+      if (editing && editing.id) {
+        res = await api.put(`/entries/${editing.id}`, payload);
         toast.success("Entry updated");
       } else {
-        await api.post("/entries", payload);
+        res = await api.post("/entries", payload);
         toast.success("Entry added");
       }
-      onSaved?.();
+      onSaved?.(res.data);
     } catch (e) {
       toast.error(e?.response?.data?.detail || "Failed to save");
     } finally {
@@ -100,12 +108,12 @@ export default function AddEntryDialog({ open, onOpenChange, categories, onSaved
           </button>
         </div>
 
-        {/* Type toggle */}
+        {/* Type toggle - Red for Expense, Green for Income */}
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setType("expense")}
-            className={`h-10 rounded-md border text-sm font-medium ${type === "expense" ? "bg-foreground text-background border-foreground" : "bg-card border-border hover:border-foreground/40"}`}
+            className={`h-10 rounded-md border text-sm font-medium ${type === "expense" ? "bg-destructive text-destructive-foreground border-destructive" : "bg-card border-border hover:border-foreground/40"}`}
             data-testid="type-expense"
           >
             Expense
@@ -113,7 +121,7 @@ export default function AddEntryDialog({ open, onOpenChange, categories, onSaved
           <button
             type="button"
             onClick={() => setType("income")}
-            className={`h-10 rounded-md border text-sm font-medium ${type === "income" ? "bg-foreground text-background border-foreground" : "bg-card border-border hover:border-foreground/40"}`}
+            className={`h-10 rounded-md border text-sm font-medium ${type === "income" ? "bg-green-600 text-white border-green-600" : "bg-card border-border hover:border-foreground/40"}`}
             data-testid="type-income"
           >
             Income
@@ -156,11 +164,29 @@ export default function AddEntryDialog({ open, onOpenChange, categories, onSaved
             <SelectContent className="max-h-72">
               {filteredCats.map((c) => (
                 <SelectItem key={c.id} value={c.name} data-testid={`cat-opt-${c.id}`}>
-                  {c.name}
+                  <div className="flex items-center justify-between w-full">
+                    <span>{c.name}</span>
+                    {isFreeUser && c.is_preset && <Lock className="w-3 h-3 text-muted-foreground" />}
+                  </div>
                 </SelectItem>
               ))}
+              {isFreeUser && filteredCats.length > 0 && (
+                <>
+                  <SelectItem disabled className="border-t border-border my-1" />
+                  <SelectItem 
+                    onSelect={(e) => { e.preventDefault(); }}
+                    className="text-center text-sm text-muted-foreground py-2"
+                    disabled
+                  >
+                    Upgrade to Premium for custom categories
+                  </SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
+          {isFreeUser && (
+            <p className="text-xs text-muted-foreground mt-1">Free plan: preset categories only</p>
+          )}
         </div>
 
         <div>
@@ -184,7 +210,7 @@ export default function AddEntryDialog({ open, onOpenChange, categories, onSaved
             className="bg-foreground text-background hover:bg-foreground/90"
             data-testid="entry-save"
           >
-            {editing ? "Save changes" : "Add entry"}
+            {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <>{editing ? "Save changes" : "Add entry"}</>}
           </Button>
         </DialogFooter>
       </DialogContent>

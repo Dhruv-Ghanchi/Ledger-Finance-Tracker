@@ -15,7 +15,13 @@ export function AuthProvider({ children }) {
       setCurrentUser(user);
       if (user) {
         try {
-          const { data } = await api.post("/users/sync");
+          const providerData = user.providerData?.[0] || {};
+          const { data } = await api.post("/users/sync", {
+            name: user.displayName || providerData.displayName || "Dev Tester",
+            profile_picture: user.photoURL || providerData.photoURL || "",
+            phone: user.phoneNumber || providerData.phoneNumber || "",
+            provider: providerData.providerId || "email"
+          });
           setDbUser(data);
         } catch (error) {
           console.error("Failed to sync user with backend", error);

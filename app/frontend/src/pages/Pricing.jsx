@@ -116,7 +116,7 @@ export default function Pricing() {
                 <li className="flex items-center">✓ <span className="ml-2">2 months duration</span></li>
                 <li className="flex items-center">✓ <span className="ml-2">No credit card required</span></li>
               </ul>
-              <Button disabled variant="outline" className="w-full h-11 border-border">
+              <Button disabled variant="outline" className="w-full h-11 border-border mt-auto">
                 Active Default
               </Button>
             </div>
@@ -136,7 +136,7 @@ export default function Pricing() {
                 <li className="flex items-center text-foreground">✓ <span className="ml-2">Advanced reports</span></li>
                 <li className="flex items-center text-foreground">✓ <span className="ml-2">Export data</span></li>
               </ul>
-              <Button onClick={() => handleUpgrade("monthly")} className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-colors">
+              <Button onClick={() => handleUpgrade("monthly")} className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-colors mt-auto">
                 Upgrade Monthly
               </Button>
             </div>
@@ -154,7 +154,7 @@ export default function Pricing() {
                 <li className="flex items-center">✓ <span className="ml-2">Advanced reports</span></li>
                 <li className="flex items-center">✓ <span className="ml-2">Export data</span></li>
               </ul>
-              <Button onClick={() => handleUpgrade("yearly")} variant="outline" className="w-full h-11 border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+              <Button onClick={() => handleUpgrade("yearly")} variant="outline" className="w-full h-11 border-border hover:bg-accent hover:text-accent-foreground transition-colors mt-auto">
                 Upgrade Yearly
               </Button>
             </div>
