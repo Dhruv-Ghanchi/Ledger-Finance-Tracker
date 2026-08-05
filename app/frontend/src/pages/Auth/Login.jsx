@@ -98,6 +98,9 @@ export default function Login() {
             </svg>
             Sign in with Google
           </Button>
+          <span className="text-[10px] text-muted-foreground text-center px-4 block mt-2">
+            By continuing with Google, you agree to our <Link to="/terms" className="underline">Terms</Link> and <Link to="/privacy" className="underline">Privacy Policy</Link>.
+          </span>
           
           <p className="mt-8 text-center text-sm text-muted-foreground">
             Don't have an account? <Link to={`/register${window.location.search}`} className="text-foreground font-medium hover:underline">Register here</Link>

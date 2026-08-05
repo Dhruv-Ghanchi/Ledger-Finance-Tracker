@@ -1,8 +1,11 @@
 // Indian number formatting (lakhs / crores)
-export function formatINR(value, { compact = false, sign = false } = {}) {
+// Backend stores amounts in paise (integer), so we divide by 100 for display
+export function formatINR(value, { compact = false, sign = false, isPaise = true } = {}) {
   const num = Number(value ?? 0);
-  const abs = Math.abs(num);
-  const prefix = sign && num > 0 ? "+" : num < 0 ? "-" : "";
+  // Convert paise to rupees if needed
+  const rupees = isPaise ? num / 100 : num;
+  const abs = Math.abs(rupees);
+  const prefix = sign && rupees > 0 ? "+" : rupees < 0 ? "-" : "";
 
   if (compact) {
     if (abs >= 1_00_00_000) {
@@ -43,3 +46,19 @@ export const MONTH_LABELS_LONG = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
+
+export function getSubscriptionExpiry(dbUser, currentUser) {
+  if (dbUser?.plan === "lifetime") return "Lifetime";
+  
+  if (dbUser?.subscription_expiry) return new Date(dbUser.subscription_expiry).toLocaleDateString();
+  if (dbUser?.trial_end) return new Date(dbUser.trial_end).toLocaleDateString();
+  
+  const createdAt = dbUser?.created_at || currentUser?.metadata?.creationTime;
+  if (createdAt) {
+    const d = new Date(createdAt);
+    d.setDate(d.getDate() + 60);
+    return d.toLocaleDateString();
+  }
+  
+  return "";
+}

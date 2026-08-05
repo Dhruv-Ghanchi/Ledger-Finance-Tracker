@@ -53,6 +53,8 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
     net: r.total_net,
   }));
 
+  const yearlyTotals = yearly?.totals || { total_income: 0, total_expense: 0, total_net: 0, personal_net: 0, business_net: 0 };
+
   return (
     <section data-testid="overview-section">
       <div className="flex items-end justify-between mb-6">
@@ -62,8 +64,9 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
             {MONTH_LABELS_LONG[month - 1]} {year}
           </h2>
         </div>
-        <div className="hidden sm:block text-xs text-muted-foreground font-mono">
-          {fyLabel(fyStart)} · 12 months
+        <div className="hidden sm:block text-xs text-muted-foreground font-mono text-right">
+          <div>{fyLabel(fyStart)} · 12 months</div>
+          <div className="text-[11px] text-muted-foreground/80 mt-0.5">FY Expense: {formatINR(yearlyTotals.total_expense)}</div>
         </div>
       </div>
 
@@ -71,27 +74,27 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
         <Kpi
           label="Total Income"
           value={formatINR(totals.income)}
-          sub={`P ${formatINR(personal.income, { compact: true })} · B ${formatINR(business.income, { compact: true })}`}
+          sub={`Monthly · P ${formatINR(personal.income, { compact: true })} · B ${formatINR(business.income, { compact: true })}`}
           testId="kpi-income"
         />
         <Kpi
           label="Total Expense"
           value={formatINR(totals.expense)}
-          sub={`P ${formatINR(personal.expense, { compact: true })} · B ${formatINR(business.expense, { compact: true })}`}
+          sub={`Monthly · P ${formatINR(personal.expense, { compact: true })} · B ${formatINR(business.expense, { compact: true })}`}
           testId="kpi-expense"
         />
         <Kpi
           label="Net · Personal"
           value={formatINR(personal.net, { sign: true })}
           tone="personal"
-          sub={personal.net >= 0 ? "Surplus" : "Deficit"}
+          sub={`${personal.net >= 0 ? "Surplus" : "Deficit"} (FY: ${formatINR(yearlyTotals.personal_net, { compact: true, sign: true })})`}
           testId="kpi-net-personal"
         />
         <Kpi
           label="Net · Business"
           value={formatINR(business.net, { sign: true })}
           tone="business"
-          sub={business.net >= 0 ? "Surplus" : "Deficit"}
+          sub={`${business.net >= 0 ? "Surplus" : "Deficit"} (FY: ${formatINR(yearlyTotals.business_net, { compact: true, sign: true })})`}
           testId="kpi-net-business"
         />
       </div>
@@ -119,7 +122,7 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
                 <Tooltip formatter={(v) => formatINR(v)} cursor={{ fill: "#F4F4F5" }} />
                 <Legend wrapperStyle={{ fontSize: 12, fontFamily: "IBM Plex Sans" }} iconType="square" />
                 <Bar dataKey="income" name="Income" fill="#059669" radius={[2,2,0,0]} maxBarSize={22} />
-                <Bar dataKey="expense" name="Expense" fill="#0F52BA" radius={[2,2,0,0]} maxBarSize={22} />
+                <Bar dataKey="expense" name="Expense" fill="#EF4444" radius={[2,2,0,0]} maxBarSize={22} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -179,7 +182,7 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
           </div>
           <div className="flex items-center gap-1 text-xs font-mono">
             {yearly?.totals?.total_net >= 0
-              ? <span className="text-business flex items-center"><ArrowUpRight className="w-3 h-3" /> {formatINR(yearly?.totals?.total_net || 0, { compact: true })}</span>
+              ? <span className="text-green-600 flex items-center"><ArrowUpRight className="w-3 h-3" /> {formatINR(yearly?.totals?.total_net || 0, { compact: true })}</span>
               : <span className="text-destructive flex items-center"><ArrowDownRight className="w-3 h-3" /> {formatINR(yearly?.totals?.total_net || 0, { compact: true })}</span>}
           </div>
         </div>

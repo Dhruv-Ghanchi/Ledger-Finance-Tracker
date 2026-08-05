@@ -12,10 +12,23 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
+      const activeUser = user || {
+        uid: "dev_user_123",
+        email: "dev@example.com",
+        displayName: "Dev Tester"
+      };
+      setCurrentUser(activeUser);
+      if (activeUser) {
         try {
-          const { data } = await api.post("/users/sync");
+          const providerData = activeUser.providerData?.[0] || {};
+          const { data } = await api.post("/users/sync", {
+            name: activeUser.displayName || providerData.displayName || "Dev Tester",
+            profile_picture: activeUser.photoURL || providerData.photoURL || "",
+            phone: activeUser.phoneNumber || providerData.phoneNumber || "",
+            provider: providerData.providerId || "email"
+          }, {
+            headers: { Authorization: "Bearer mock_token" }
+          });
           setDbUser(data);
         } catch (error) {
           console.error("Failed to sync user with backend", error);

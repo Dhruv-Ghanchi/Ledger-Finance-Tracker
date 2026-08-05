@@ -5,11 +5,16 @@ import Login from "@/pages/Auth/Login";
 import Register from "@/pages/Auth/Register";
 import Dashboard from "@/pages/Dashboard";
 import Pricing from "@/pages/Pricing";
+import ProfileSettings from "@/pages/ProfileSettings";
+import Subscription from "@/pages/Subscription";
 import { Toaster } from "@/components/ui/sonner";
 
 import Landing from "@/pages/Landing";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
+import Refund from "@/pages/Refund";
 
-function Root() {
+function ProtectedRoute({ element }) {
   const { currentUser, loading } = useAuth();
   
   if (loading) {
@@ -21,7 +26,7 @@ function Root() {
   }
   
   if (!currentUser) return <Navigate to="/login" replace />;
-  return <Dashboard />;
+  return element;
 }
 
 function App() {
@@ -33,12 +38,17 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/pricing" element={<Pricing />} />
-            <Route path="/dashboard" element={<Root />} />
+            <Route path="/profile" element={<ProtectedRoute element={<ProfileSettings />} />} />
+            <Route path="/subscription" element={<ProtectedRoute element={<Subscription />} />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/refund" element={<Refund />} />
+            <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
             <Route path="/" element={<Landing />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-        <Toaster position="top-right" />
+        <Toaster position="top-right" closeButton />
       </AuthProvider>
     </div>
   );

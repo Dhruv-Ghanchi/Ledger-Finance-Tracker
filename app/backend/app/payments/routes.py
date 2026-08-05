@@ -1,7 +1,7 @@
 import razorpay
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 from datetime import datetime, timezone
 import uuid
 from app.core.config import settings
@@ -75,6 +75,57 @@ async def create_subscription(body: CreateSubscriptionRequest, current_user: Cur
         logger.error(f"Error creating razorpay subscription: {e}")
         raise HTTPException(status_code=500, detail=f"Error creating subscription: {e}")
 
+@router.get("/subscription")
+async def get_subscription(current_user: CurrentUser = Depends(get_current_user)):
+    sub = await db.db.subscriptions.find_one(
+        {"user_id": current_user.firebase_uid},
+        {"_id": 0, "razorpay_customer_id": 0, "razorpay_subscription_id": 0}
+    )
+    if not sub:
+        return {"plan": "free", "status": "inactive"}
+    return sub
+
+@router.get("/history")
+async def get_payment_history(current_user: CurrentUser = Depends(get_current_user)):
+    payments = await db.db.payments.find(
+        {"user_id": current_user.firebase_uid},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    return payments
+
+@router.post("/cancel")
+async def cancel_subscription(current_user: CurrentUser = Depends(get_current_user)):
+    user = await db.db.users.find_one({"firebase_uid": current_user.firebase_uid})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    sub = await db.db.subscriptions.find_one({"user_id": current_user.firebase_uid})
+    if not sub or not sub.get("razorpay_subscription_id"):
+        raise HTTPException(status_code=400, detail="No active subscription found")
+    
+    client = get_rzp_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="Razorpay is not configured")
+    
+    try:
+        # Cancel at end of billing cycle
+        client.subscription.cancel(sub["razorpay_subscription_id"])
+        
+        await db.db.subscriptions.update_one(
+            {"razorpay_subscription_id": sub["razorpay_subscription_id"]},
+            {"$set": {"status": "cancelled"}}
+        )
+        
+        await db.db.users.update_one(
+            {"firebase_uid": current_user.firebase_uid},
+            {"$set": {"subscription_status": "cancelled"}}
+        )
+        
+        return {"ok": True, "message": "Subscription cancelled successfully"}
+    except Exception as e:
+        logger.error(f"Error cancelling subscription: {e}")
+        raise HTTPException(status_code=500, detail=f"Error cancelling subscription: {e}")
+
 @router.post("/webhook")
 async def razorpay_webhook(request: Request):
     try:
@@ -94,6 +145,14 @@ async def razorpay_webhook(request: Request):
         start = datetime.fromtimestamp(sub_data["current_start"], tz=timezone.utc).isoformat() if sub_data.get("current_start") else None
         end = datetime.fromtimestamp(sub_data["current_end"], tz=timezone.utc).isoformat() if sub_data.get("current_end") else None
         
+        # Get plan from our stored subscription
+        sub_doc = await db.db.subscriptions.find_one({"razorpay_subscription_id": sub_id})
+        plan = sub_doc.get("plan", "monthly") if sub_doc else "monthly"
+        
+        # Get amount from payment
+        amount = sub_data.get("amount", 0)
+        payment_id = sub_data.get("payment_id")
+        
         updates = {"status": status}
         if start: updates["start_date"] = start
         if end: updates["expiry_date"] = end
@@ -103,13 +162,26 @@ async def razorpay_webhook(request: Request):
             {"$set": updates}
         )
         
+        # Record payment
+        if event == "subscription.charged" and payment_id:
+            payment_doc = {
+                "id": str(uuid.uuid4()),
+                "user_id": uid,
+                "razorpay_payment_id": payment_id,
+                "razorpay_subscription_id": sub_id,
+                "plan": plan,
+                "amount": amount,  # in paise from Razorpay
+                "status": "captured",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.db.payments.insert_one(payment_doc)
+        
         if uid and status in ["active", "authenticated"]:
-            sub_doc = await db.db.subscriptions.find_one({"razorpay_subscription_id": sub_id})
             if sub_doc:
                 await db.db.users.update_one(
                     {"firebase_uid": uid},
                     {"$set": {
-                        "plan": sub_doc["plan"],
+                        "plan": plan,
                         "subscription_status": "active",
                         "subscription_expiry": end
                     }}
@@ -133,4 +205,23 @@ async def razorpay_webhook(request: Request):
                 {"$set": {"subscription_status": status}}
             )
             
+    elif event == "payment.captured":
+        # Handle one-time payments (if any)
+        payment_data = data["payload"]["payment"]["entity"]
+        payment_id = payment_data["id"]
+        amount = payment_data["amount"]
+        notes = payment_data.get("notes", {})
+        uid = notes.get("firebase_uid")
+        
+        if uid:
+            payment_doc = {
+                "id": str(uuid.uuid4()),
+                "user_id": uid,
+                "razorpay_payment_id": payment_id,
+                "amount": amount,
+                "status": "captured",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.db.payments.insert_one(payment_doc)
+
     return {"status": "ok"}
