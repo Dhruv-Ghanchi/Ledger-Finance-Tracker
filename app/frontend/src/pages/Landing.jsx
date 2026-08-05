@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram } from "lucide-react";
+import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -90,13 +90,13 @@ export default function Landing() {
         <section className="w-full py-24 md:py-32 flex flex-col items-center text-center px-4">
           <div className="inline-flex items-center rounded-full border border-border px-3 py-1 text-sm mb-8 bg-muted/50 backdrop-blur text-muted-foreground">
             <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-            <span>v1.0 is now live for everyone</span>
+            <span>Ledger AI & Smart OCR now live</span>
           </div>
           <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tight mb-6 max-w-4xl leading-tight">
             Take control of your <br className="hidden md:block" /> financial future.
           </h1>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl">
-            The minimalist, secure personal ledger that respects your privacy. Track spending, monitor subscriptions, and build wealth effortlessly.
+            The intelligent personal ledger that respects your privacy. Chat with AI, scan receipts instantly, and build wealth effortlessly.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
              <Link to="/register">
@@ -190,23 +190,23 @@ export default function Landing() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="bg-background border-border shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                 <CardHeader>
-                  <ShieldCheck className="h-8 w-8 mb-4 text-foreground" />
-                  <CardTitle className="font-display">Bank-Grade Security</CardTitle>
-                  <CardDescription className="text-sm">Powered by Firebase Authentication. Your data is isolated, encrypted, and completely yours.</CardDescription>
+                  <MessageSquare className="h-8 w-8 mb-4 text-foreground" />
+                  <CardTitle className="font-display">Ledger AI Assistant</CardTitle>
+                  <CardDescription className="text-sm">Chat naturally to log expenses, check balances, and query your financial habits effortlessly.</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="bg-background border-border shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                 <CardHeader>
-                  <BarChart3 className="h-8 w-8 mb-4 text-foreground" />
-                  <CardTitle className="font-display">Intelligent Analytics</CardTitle>
-                  <CardDescription className="text-sm">Visualize your spending habits with gorgeous, easy-to-read charts and monthly summaries.</CardDescription>
+                  <Scan className="h-8 w-8 mb-4 text-foreground" />
+                  <CardTitle className="font-display">Smart Receipt OCR</CardTitle>
+                  <CardDescription className="text-sm">Upload receipts or bank statements. Our engine extracts the data instantly with zero manual entry.</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="bg-background border-border shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                 <CardHeader>
-                  <Smartphone className="h-8 w-8 mb-4 text-foreground" />
-                  <CardTitle className="font-display">Multi-Device Sync</CardTitle>
-                  <CardDescription className="text-sm">Access your ledger seamlessly across your phone, tablet, and desktop without losing a beat.</CardDescription>
+                  <FileText className="h-8 w-8 mb-4 text-foreground" />
+                  <CardTitle className="font-display">PDF Statements</CardTitle>
+                  <CardDescription className="text-sm">Download official monthly and yearly PDF invoices of your financial data for your records.</CardDescription>
                 </CardHeader>
               </Card>
             </div>
@@ -375,10 +375,10 @@ export default function Landing() {
                     <span className="text-sm text-muted-foreground ml-1">/ month</span>
                   </div>
                   <ul className="text-sm text-foreground space-y-4 mb-8 flex-1">
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Unlimited entries</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Advanced reports</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Export data (CSV/Excel)</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Custom categories</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Ledger AI Chatbot</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Smart Receipt Scanner</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> PDF Invoice Downloads</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Unlimited Entries</li>
                   </ul>
                   <Link to="/register?intent=monthly" className="mt-auto">
                     <Button className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-colors">
@@ -401,10 +401,10 @@ export default function Landing() {
                   </div>
                   <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
                     <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Save ~15% annually</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Unlimited entries</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Advanced reports</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Export data (CSV/Excel)</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Custom categories</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Ledger AI Chatbot</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Smart Receipt Scanner</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> PDF Invoice Downloads</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Unlimited Entries</li>
                   </ul>
                   <Link to="/register?intent=yearly" className="mt-auto">
                     <Button variant="outline" className="w-full h-11 border-border hover:bg-accent hover:text-accent-foreground transition-colors">

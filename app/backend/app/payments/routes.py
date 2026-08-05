@@ -1,5 +1,5 @@
-import razorpay
-from fastapi import APIRouter, Depends, HTTPException, Request
+from razorpay.errors import SignatureVerificationError
+from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from pydantic import BaseModel
 from typing import Literal, Optional
 from datetime import datetime, timezone
@@ -127,11 +127,23 @@ async def cancel_subscription(current_user: CurrentUser = Depends(get_current_us
         raise HTTPException(status_code=500, detail=f"Error cancelling subscription: {e}")
 
 @router.post("/webhook")
-async def razorpay_webhook(request: Request):
+async def razorpay_webhook(request: Request, x_razorpay_signature: str = Header(None)):
+    body_bytes = await request.body()
     try:
         data = await request.json()
     except:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
+        
+    client = get_rzp_client()
+    if client and settings.RAZORPAY_WEBHOOK_SECRET:
+        if not x_razorpay_signature:
+            raise HTTPException(status_code=400, detail="Missing signature")
+        try:
+            client.utility.verify_webhook_signature(
+                body_bytes.decode(), x_razorpay_signature, settings.RAZORPAY_WEBHOOK_SECRET
+            )
+        except SignatureVerificationError:
+            raise HTTPException(status_code=400, detail="Invalid signature")
         
     event = data.get("event")
     

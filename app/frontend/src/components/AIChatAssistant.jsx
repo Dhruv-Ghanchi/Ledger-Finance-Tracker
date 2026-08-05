@@ -117,7 +117,11 @@ export default function AIChatAssistant() {
       setMessages([...newMessages, { role: "assistant", content: res.data.response }]);
     } catch (err) {
       console.error(err);
-      setMessages([...newMessages, { role: "assistant", content: "Sorry, I encountered an error. Please check if the LLM API key is configured properly in the backend." }]);
+      if (err?.response?.status === 403) {
+        setMessages(messages);
+      } else {
+        setMessages([...newMessages, { role: "assistant", content: "Sorry, I encountered an error. Please check if the LLM API key is configured properly in the backend." }]);
+      }
     } finally {
       setLoading(false);
     }

@@ -49,16 +49,25 @@ export default function Privacy() {
             <li>Regular security audits and dependency updates</li>
           </ul>
 
-          <h2>4. Third-Party Services</h2>
+          <h2>4. Third-Party Services & AI Processing</h2>
           <p>We use the following third-party services:</p>
           <ul>
             <li><strong>Firebase Authentication:</strong> For user authentication and identity management</li>
             <li><strong>Razorpay:</strong> For subscription payment processing</li>
             <li><strong>MongoDB Atlas:</strong> For database hosting</li>
+            <li><strong>AI Providers (OpenAI/Groq/Google):</strong> We use external AI APIs to power Ledger AI and Smart Receipt Scanning. When you use these features, minimal required text data is sent to these providers for processing. <strong>Your data is NOT used to train their AI models.</strong></li>
           </ul>
           <p>These providers have their own privacy policies. We only share the minimum data necessary for them to provide their services.</p>
+          
+          <h2>5. Uploaded Files & Receipts (Ephemeral Storage)</h2>
+          <p>When you upload an image of a receipt or a bank statement CSV/Excel file for the Smart Scanner to process:</p>
+          <ul>
+            <li>The file is temporarily loaded into server memory for extraction.</li>
+            <li><strong>The file is instantly and permanently deleted</strong> from our servers the moment extraction is complete (usually within seconds).</li>
+            <li>We do not store your original receipts, images, or statement files in our database.</li>
+          </ul>
 
-          <h2>5. Data Retention</h2>
+          <h2>6. Data Retention</h2>
           <ul>
             <li>Account data is retained while your account is active</li>
             <li>Financial data is retained for 7 years for tax/compliance purposes (Indian regulations)</li>
@@ -66,7 +75,7 @@ export default function Privacy() {
             <li>Upon deletion, data is purged within 30 days from active systems and 90 days from backups</li>
           </ul>
 
-          <h2>6. Your Rights</h2>
+          <h2>7. Your Rights</h2>
           <p>Under applicable data protection laws, you have the right to:</p>
           <ul>
             <li>Access your personal data</li>
@@ -77,19 +86,19 @@ export default function Privacy() {
             <li>Object to processing</li>
           </ul>
 
-          <h2>7. Cookies & Tracking</h2>
+          <h2>8. Cookies & Tracking</h2>
           <p>We use essential cookies for authentication and session management. We do not use tracking cookies, analytics cookies, or advertising cookies.</p>
 
-          <h2>8. Children's Privacy</h2>
+          <h2>9. Children's Privacy</h2>
           <p>Ledger is not intended for users under 18. We do not knowingly collect personal information from children under 18. If you become aware that a child has provided us with personal information, please contact us immediately.</p>
 
-          <h2>9. International Transfers</h2>
+          <h2>10. International Transfers</h2>
           <p>Your data is stored on servers located in India (Mumbai region). We do not transfer your data outside India unless required by law.</p>
 
-          <h2>10. Changes to This Policy</h2>
+          <h2>11. Changes to This Policy</h2>
           <p>We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the "Last updated" date.</p>
 
-          <h2>11. Contact Us</h2>
+          <h2>12. Contact Us</h2>
           <p>If you have any questions about this Privacy Policy or wish to exercise your data rights, please contact us via the <Link to="/" className="underline">Contact section</Link> on our landing page.</p>
         </div>
       </main>

@@ -33,8 +33,6 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
     now = datetime.now(timezone.utc)
     
     if not user:
-        is_lifetime_offer = (body and body.promo_code == "LIFETIMEFREE")
-        
         user_doc = {
             "firebase_uid": current_user.firebase_uid,
             "email": current_user.email,
@@ -44,10 +42,10 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
             "provider": body.provider if body and body.provider else "", 
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
-            "plan": "lifetime" if is_lifetime_offer else "trial",
+            "plan": "trial",
             "subscription_status": "active",
-            "trial_start": now.isoformat() if not is_lifetime_offer else None,
-            "trial_end": (now + timedelta(days=60)).isoformat() if not is_lifetime_offer else None,
+            "trial_start": now.isoformat(),
+            "trial_end": (now + timedelta(days=60)).isoformat(),
             "subscription_expiry": None
         }
         await db.db.users.insert_one(user_doc.copy())

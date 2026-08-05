@@ -11,8 +11,6 @@ api.interceptors.request.use(async (config) => {
   if (user) {
     const token = await user.getIdToken();
     config.headers["Authorization"] = `Bearer ${token}`;
-  } else {
-    config.headers["Authorization"] = `Bearer mock_token`;
   }
   return config;
 });
@@ -24,6 +22,8 @@ api.interceptors.response.use(
       if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
         window.location.href = "/login";
       }
+    } else if (err?.response?.status === 403) {
+      window.dispatchEvent(new CustomEvent("premiumRequired"));
     }
     return Promise.reject(err);
   }

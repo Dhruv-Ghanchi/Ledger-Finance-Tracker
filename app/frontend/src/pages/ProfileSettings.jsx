@@ -159,7 +159,7 @@ export default function ProfileSettings() {
                   <span className="text-muted-foreground">Current Plan</span>
                   <span className="font-semibold capitalize">{dbUser?.plan || "free"}</span>
                 </div>
-                {(dbUser?.plan === "monthly" || dbUser?.plan === "yearly") && (
+                {(dbUser?.plan === "monthly" || dbUser?.plan === "yearly" || dbUser?.plan === "lifetime") && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Status</span>
                     <span className="font-semibold capitalize">

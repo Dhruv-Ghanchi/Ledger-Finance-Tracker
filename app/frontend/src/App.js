@@ -13,6 +13,7 @@ import Landing from "@/pages/Landing";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Refund from "@/pages/Refund";
+import PremiumUpgradeModal from "@/components/PremiumUpgradeModal";
 
 function ProtectedRoute({ element }) {
   const { currentUser, loading } = useAuth();
@@ -33,6 +34,7 @@ function App() {
   return (
     <div className="App">
       <AuthProvider>
+        <PremiumUpgradeModal />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -48,7 +50,16 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-        <Toaster position="top-right" closeButton />
+        <Toaster 
+          position="top-right" 
+          closeButton 
+          toastOptions={{
+            classNames: {
+              toast: "group",
+              closeButton: "left-[initial] right-4 top-1/2 -translate-y-1/2 !bg-transparent !border-none !shadow-none opacity-0 group-hover:opacity-100 transition-opacity !text-muted-foreground hover:!text-foreground",
+            }
+          }}
+        />
       </AuthProvider>
     </div>
   );

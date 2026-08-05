@@ -20,6 +20,7 @@ import YearlySummaryTab from "@/components/YearlySummaryTab";
 import CategoriesManager from "@/components/CategoriesManager";
 import ExportModal from "@/components/ExportModal";
 import ImportModal from "@/components/ImportModal";
+import BatchReviewModal from "@/components/BatchReviewModal";
 import AIChatAssistant from "@/components/AIChatAssistant";
 
 const fetcher = (url) => api.get(url).then((r) => r.data);
@@ -35,6 +36,8 @@ export default function Dashboard() {
   const [catOpen, setCatOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewEntries, setReviewEntries] = useState([]);
 
   const fyOptions = useMemo(() => recentFYs(10), []);
   const monthsInFY = useMemo(() => fyMonths(fyStart), [fyStart]);
@@ -318,9 +321,16 @@ export default function Dashboard() {
         open={importOpen}
         onOpenChange={setImportOpen}
         onParsed={(data) => {
-          refreshAll(data);
-          toast.success(`Imported receipt: ${data.note || 'Entry'} (₹${data.amount})`);
+          setReviewEntries(data);
+          setReviewOpen(true);
         }}
+      />
+      <BatchReviewModal
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        initialEntries={reviewEntries}
+        categories={categories}
+        onSaved={() => refreshAll()}
       />
       <AIChatAssistant />
     </div>

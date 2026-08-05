@@ -1,6 +1,6 @@
 // Indian number formatting (lakhs / crores)
-// Backend stores amounts in paise (integer), so we divide by 100 for display
-export function formatINR(value, { compact = false, sign = false, isPaise = true } = {}) {
+// Backend currently stores amounts as float rupees, so we default isPaise to false
+export function formatINR(value, { compact = false, sign = false, isPaise = false } = {}) {
   const num = Number(value ?? 0);
   // Convert paise to rupees if needed
   const rupees = isPaise ? num / 100 : num;

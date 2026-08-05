@@ -14,6 +14,7 @@ class Settings:
     
     RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
     RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
+    RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
     RAZORPAY_PLAN_MONTHLY = os.environ.get("RAZORPAY_PLAN_MONTHLY", "")
     RAZORPAY_PLAN_YEARLY = os.environ.get("RAZORPAY_PLAN_YEARLY", "")
     

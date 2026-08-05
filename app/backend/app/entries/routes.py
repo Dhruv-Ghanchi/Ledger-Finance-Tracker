@@ -11,8 +11,11 @@ import tempfile
 import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
+import pandas as pd
+import numpy as np
 
 from app.auth.firebase import get_current_user, CurrentUser
+from app.subscriptions.checker import require_premium
 from app.core.db import db
 
 router = APIRouter(prefix="/api", tags=["entries"])
@@ -29,6 +32,9 @@ class Entry(BaseModel):
     scope: Literal["personal", "business"]
     category: str
     note: Optional[str] = ""
+
+class BulkConfirmRequest(BaseModel):
+    entries: List[Entry]
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class EntryCreate(BaseModel):
@@ -396,6 +402,8 @@ def _clean_ocr_text(text: str) -> str:
     text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
     # Remove table separator lines (|---|---|)
     text = re.sub(r"^\s*\|?[\s\-|]+\|?\s*$", "", text, flags=re.MULTILINE)
+    # Normalize currency symbols adjacent to digits → plain digit (₹1,200 → 1,200)
+    text = re.sub(r"[₹$£€¥\u20B9]\s*", "", text)
     # Collapse multiple blank lines
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
@@ -466,10 +474,13 @@ def extract_receipt_data_from_text(text: str) -> dict:
         cleaned = re.sub(r"[^a-zA-Z0-9\s&/\-]", "", line).strip()
         cl = cleaned.lower()
         alpha_chars = sum(1 for c in cleaned if c.isalpha())
+        # Require at least one word with 4+ consecutive letters (filters garbled OCR)
+        has_real_word = bool(re.search(r"[a-zA-Z]{4,}", cleaned))
         if (
             cleaned
             and len(cleaned) > 3
             and alpha_chars >= 3
+            and has_real_word
             and not cl.startswith(_SKIP_STARTS)
             and not any(re.search(p, cleaned) for p in _SKIP_PATTERNS)
         ):
@@ -531,13 +542,16 @@ def extract_receipt_data_from_text(text: str) -> dict:
 
     if amount == 0.0:
         # Step 1 — explicit grand/invoice/payable total label
+        # Searches a 5-line window (covers large invoices where amount is on next line).
+        _TOTAL_LABELS = re.compile(
+            r"invoice\s*total|grand\s*total|g\.?\s*total|net\s*total|net\s*amount|"
+            r"total\s*amount|payable\s*amount|amount\s*payable|balance\s*due|"
+            r"bill\s*total|total\s*due|total\s*payable",
+            re.IGNORECASE,
+        )
         for i, line in enumerate(lines):
-            if re.search(
-                r"invoice\s*total|grand\s*total|net\s*total|net\s*amount|"
-                r"total\s*amount|payable\s*amount|amount\s*payable|balance\s*due",
-                line, re.IGNORECASE,
-            ):
-                block = " ".join(lines[i:i + 3])
+            if _TOTAL_LABELS.search(line):
+                block = " ".join(lines[i:i + 5])
                 candidates = []
                 for n in re.findall(r"[\d,]+\.\d{2}", block):
                     try:
@@ -552,6 +566,7 @@ def extract_receipt_data_from_text(text: str) -> dict:
 
     if amount == 0.0:
         # Step 2 — subtotal + GST + round-off
+        # Only used when no explicit total label was found.
         subtotal = tax_amount = round_off = 0.0
         for i, line in enumerate(lines):
             if re.search(r"\bsub\s*-?\s*total\b", line, re.IGNORECASE) and subtotal == 0.0:
@@ -589,11 +604,15 @@ def extract_receipt_data_from_text(text: str) -> dict:
             amount = round(subtotal + tax_amount + round_off, 2)
 
     if amount == 0.0:
-        # Step 3 — largest decimal on total/cash/paid/net/payable lines
+        # Step 3 — largest decimal on total/cash/paid/net/payable/g.total lines
+        _TOTAL_LINE = re.compile(
+            r"\btotal\b|\bcash\b|\bpaid\b|\bnet\b|\bpayable\b|g\.?\s*total",
+            re.IGNORECASE,
+        )
         for line in lines:
             if "%" in line:
                 continue
-            if re.search(r"\btotal\b|\bcash\b|\bpaid\b|\bnet\b|\bpayable\b", line, re.IGNORECASE):
+            if _TOTAL_LINE.search(line):
                 for n in re.findall(r"[\d,]+\.\d{2}", line):
                     try:
                         v = float(n.replace(",", ""))
@@ -603,22 +622,41 @@ def extract_receipt_data_from_text(text: str) -> dict:
                         pass
 
     if amount == 0.0:
-        # Step 4 — largest decimal anywhere (skip percentage lines)
+        # Step 4 — fallback: use the last decimal found in the receipt.
+        # Often the last number is the final total (after discounts, which make the subtotal larger).
+        # We skip percentage lines and lines that look like phone/licence numbers.
+        _PHONE_LINE = re.compile(
+            r"\b(mob|phone|tel|gstin|dl\.?\s*no|licence|lic\.?\s*no|account|acct|routing)\b",
+            re.IGNORECASE,
+        )
+        candidates = []
         for line in lines:
             if "%" in line:
+                continue
+            if _PHONE_LINE.search(line):
                 continue
             for n in re.findall(r"[\d,]+\.\d{2}", line):
                 try:
                     v = float(n.replace(",", ""))
-                    if 1.0 <= v <= 500000.0 and v not in _YEAR_EXCLUDE and v > amount:
-                        amount = v
+                    if 1.0 <= v <= 500000.0 and v not in _YEAR_EXCLUDE:
+                        candidates.append(v)
                 except ValueError:
                     pass
+        if candidates:
+            # We pick the last candidate as it's most likely the final total at the bottom
+            amount = candidates[-1]
 
     if amount == 0.0:
         # Step 5 — integer amounts with no decimal (e.g. "1200", "15000")
+        # Skip lines with phone/licence/GSTIN keywords to avoid false positives.
+        _PHONE_LINE = re.compile(
+            r"\b(mob|phone|tel|gstin|dl\.?\s*no|licence|lic\.?\s*no|account|acct|routing|pin)\b",
+            re.IGNORECASE,
+        )
         for line in lines:
             if "%" in line:
+                continue
+            if _PHONE_LINE.search(line):
                 continue
             for n in re.findall(r"\b(\d{3,6})\b", line):
                 try:
@@ -876,28 +914,159 @@ def _ocr_receipt(tmp_path: str, suffix: str, tmp_clean_files: list) -> str:
     return best_text
 
 
+# ── Statement Parsing ──────────────────────────────────────────────────────────
+
+def _parse_bank_statement(tmp_path: str, ext: str) -> list[dict]:
+    """Parse a bank statement CSV/Excel file and extract standard fields."""
+    try:
+        if ext == ".csv":
+            df = pd.read_csv(tmp_path)
+        else:
+            df = pd.read_excel(tmp_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
+
+    # Standardize column names for fuzzy matching
+    df.columns = df.columns.str.lower().str.strip()
+    
+    # Identify key columns
+    date_col = None
+    desc_col = None
+    amount_col = None
+    type_col = None # credit/debit or deposit/withdrawal
+    credit_col = None
+    debit_col = None
+
+    for col in df.columns:
+        if not date_col and any(k in col for k in ["date", "txn date", "value date"]):
+            date_col = col
+        elif not desc_col and any(k in col for k in ["narration", "description", "particulars", "remarks"]):
+            desc_col = col
+        elif not credit_col and any(k in col for k in ["credit", "deposit"]):
+            credit_col = col
+        elif not debit_col and any(k in col for k in ["debit", "withdrawal"]):
+            debit_col = col
+        elif not amount_col and any(k in col for k in ["amount"]):
+            amount_col = col
+        elif not type_col and any(k in col for k in ["type", "dr/cr"]):
+            type_col = col
+
+    if not date_col or not desc_col:
+        raise HTTPException(status_code=422, detail="Could not identify Date and Description columns in the file.")
+
+    if not amount_col and not (credit_col and debit_col):
+         raise HTTPException(status_code=422, detail="Could not identify Amount or Credit/Debit columns in the file.")
+
+    results = []
+    
+    # Process each row
+    for _, row in df.iterrows():
+        # Skip empty rows
+        if pd.isna(row[date_col]):
+            continue
+            
+        try:
+            # Parse Date
+            dt = pd.to_datetime(row[date_col], format="mixed", dayfirst=True)
+            date_str = dt.strftime("%Y-%m-%d")
+        except Exception:
+            continue # Skip invalid date rows
+
+        # Parse Description
+        note = str(row[desc_col]).strip() if pd.notna(row[desc_col]) else "Bank Transaction"
+
+        # Parse Amount and Type
+        amount = 0.0
+        txn_type = "expense"
+        
+        if credit_col and debit_col:
+            cred = row[credit_col]
+            deb = row[debit_col]
+            
+            if pd.notna(cred) and str(cred).strip() and float(str(cred).replace(",", "")) > 0:
+                amount = float(str(cred).replace(",", ""))
+                txn_type = "income"
+            elif pd.notna(deb) and str(deb).strip() and float(str(deb).replace(",", "")) > 0:
+                amount = float(str(deb).replace(",", ""))
+                txn_type = "expense"
+        elif amount_col:
+            val = row[amount_col]
+            if pd.notna(val):
+                val_float = float(str(val).replace(",", ""))
+                amount = abs(val_float)
+                
+                # Determine type
+                if type_col and pd.notna(row[type_col]):
+                    t_str = str(row[type_col]).lower()
+                    if "cr" in t_str or "credit" in t_str or "deposit" in t_str:
+                        txn_type = "income"
+                    else:
+                        txn_type = "expense"
+                else:
+                     # If amount is negative, assume expense. If positive, assume income (or vice versa depending on bank, this is a fallback)
+                     if val_float < 0:
+                         txn_type = "expense"
+                     else:
+                         # Without dr/cr col, we have to guess or assume expense. Let's assume expense for absolute amounts.
+                         txn_type = "expense"
+                         
+        if amount == 0:
+             continue # Skip zero amount rows
+             
+        category = _infer_category(note, "")
+        
+        results.append({
+            "id": str(uuid.uuid4()),
+            "date": date_str,
+            "amount": amount,
+            "type": txn_type,
+            "scope": "personal",
+            "category": category,
+            "note": note[:100]
+        })
+
+    if not results:
+        raise HTTPException(status_code=422, detail="No valid transactions found in the file.")
+        
+    return results
+
+
 # ── Import endpoint ────────────────────────────────────────────────────────────
 
-@router.post("/entries/import")
-async def import_receipt(
+@router.post("/entries/import/preview")
+async def import_receipt_preview(
     file: UploadFile = File(...),
     current_user: CurrentUser = Depends(get_current_user),
+    _ = Depends(require_premium)
 ):
-    """Upload a receipt image/PDF, OCR it with LiteParse, and auto-save the
-    extracted data as an expense entry."""
+    """Upload a receipt image/PDF or bank statement CSV/Excel.
+    Returns a list of parsed draft entries for the user to review.
+    Does NOT save to the database."""
     tmp_clean_files: list[str] = []
 
     try:
         suffix = os.path.splitext(file.filename or "")[1].lower() or ".jpg"
+        allowed_extensions = {".jpg", ".jpeg", ".png", ".pdf", ".csv", ".xls", ".xlsx", ".webp"}
+        if suffix not in allowed_extensions:
+            raise HTTPException(status_code=415, detail="Unsupported file type")
+            
         content = await file.read()
         if not content:
             raise HTTPException(status_code=400, detail="Empty file")
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large. Max 10MB")
 
         # Write upload to a plain path — no open handle (Windows-safe)
         tmp_path = _make_tmp_path(suffix)
         with open(tmp_path, "wb") as f:
             f.write(content)
         tmp_clean_files.append(tmp_path)
+        
+        if suffix in [".csv", ".xls", ".xlsx"]:
+             parsed_list = _parse_bank_statement(tmp_path, suffix)
+             for item in parsed_list:
+                 item["user_id"] = current_user.firebase_uid
+             return parsed_list
 
         text = _ocr_receipt(tmp_path, suffix, tmp_clean_files)
         if not text.strip():
@@ -906,6 +1075,7 @@ async def import_receipt(
         parsed = extract_receipt_data_from_text(text)
 
         entry_dict = {
+            "id": str(uuid.uuid4()),
             "user_id": current_user.firebase_uid,
             "date":     parsed["date"],
             "amount":   parsed["amount"],
@@ -915,21 +1085,7 @@ async def import_receipt(
             "note":     parsed.get("note", ""),
         }
 
-        # Skip duplicate if same date + amount + note already exists
-        existing = await db.db.entries.find_one({
-            "user_id": current_user.firebase_uid,
-            "date":    entry_dict["date"],
-            "amount":  entry_dict["amount"],
-            "note":    entry_dict["note"],
-        })
-        if existing:
-            existing["id"] = existing.get("id", str(existing.get("_id", "")))
-            existing.pop("_id", None)
-            return Entry(**existing)
-
-        entry = Entry(**entry_dict)
-        await db.db.entries.insert_one(entry.model_dump())
-        return entry
+        return [entry_dict]
 
     except HTTPException:
         raise
@@ -943,3 +1099,26 @@ async def import_receipt(
                     os.remove(p)
                 except Exception:
                     pass
+
+@router.post("/entries/import/confirm")
+async def import_confirm(
+    req: BulkConfirmRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    _ = Depends(require_premium)
+):
+    """Bulk insert an array of reviewed and confirmed entries."""
+    if not req.entries:
+        return {"inserted_count": 0}
+
+    docs_to_insert = []
+    for entry in req.entries:
+        # Enforce security: ensure user_id matches
+        if entry.user_id != current_user.firebase_uid:
+            continue
+        docs_to_insert.append(entry.model_dump())
+        
+    if not docs_to_insert:
+        raise HTTPException(status_code=400, detail="No valid entries to insert")
+
+    res = await db.db.entries.insert_many(docs_to_insert)
+    return {"inserted_count": len(res.inserted_ids)}

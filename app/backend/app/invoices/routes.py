@@ -17,15 +17,12 @@ from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.lib.colors import HexColor
 
 from app.auth.firebase import get_current_user, CurrentUser
+from app.subscriptions.checker import require_premium
 from app.core.db import db
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 
-def paise_to_rupees(paise: int) -> float:
-    return paise / 100.0
-
-def format_inr(paise: int) -> str:
-    rupees = paise_to_rupees(paise)
+def format_inr(rupees: float) -> str:
     return f"₹{rupees:,.2f}"
 
 async def get_user_entries(user_id: str, fy_start: int, scope: Optional[str] = None):
@@ -329,6 +326,7 @@ def build_invoice_pdf(user, entries, fy_start, scope=None):
 @router.get("/download")
 async def download_invoice(
     current_user: CurrentUser = Depends(get_current_user),
+    _ = Depends(require_premium),
     fy_start: int = Query(...),
     scope: Optional[str] = Query(None),
 ):

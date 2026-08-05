@@ -65,7 +65,7 @@ export default function ImportModal({ open, onOpenChange, onParsed }) {
       const formData = new FormData();
       formData.append("file", file);
       
-      const res = await api.post("/entries/import", formData, {
+      const res = await api.post("/entries/import/preview", formData, {
         headers: {
           "Content-Type": "multipart/form-data"
         }
@@ -73,7 +73,6 @@ export default function ImportModal({ open, onOpenChange, onParsed }) {
       
       onOpenChange(false);
       setFile(null);
-      // Pass the extracted data to parent to auto-fill the Add Entry form
       if (onParsed) {
         onParsed(res.data);
       }

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List
 
 from app.auth.firebase import get_current_user, CurrentUser
+from app.subscriptions.checker import require_premium
 from app.chat.agent import agent, ChatDependencies
 from app.chat.cleaning import strip_markdown
 from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, TextPart, UserPromptPart
@@ -10,8 +11,23 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 import os
 import logging
+import time
+from collections import defaultdict
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+
+RATE_LIMIT_DURATION = 60
+MAX_REQUESTS_PER_MINUTE = 5
+user_rate_limits = defaultdict(list)
+
+def check_rate_limit(user_id: str):
+    now = time.time()
+    user_requests = user_rate_limits[user_id]
+    user_requests = [t for t in user_requests if now - t < RATE_LIMIT_DURATION]
+    if len(user_requests) >= MAX_REQUESTS_PER_MINUTE:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
+    user_requests.append(now)
+    user_rate_limits[user_id] = user_requests
 
 class ChatMessage(BaseModel):
     role: str
@@ -21,7 +37,8 @@ class ChatRequest(BaseModel):
     messages: List[ChatMessage]
 
 @router.post("")
-async def chat_endpoint(request: ChatRequest, current_user: CurrentUser = Depends(get_current_user)):
+async def chat_endpoint(request: ChatRequest, current_user: CurrentUser = Depends(get_current_user), _ = Depends(require_premium)):
+    check_rate_limit(current_user.firebase_uid)
     if not request.messages:
         raise HTTPException(status_code=400, detail="No messages provided")
         

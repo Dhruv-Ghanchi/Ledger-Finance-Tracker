@@ -36,8 +36,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Curre
         raise HTTPException(status_code=401, detail="Invalid or missing Authorization header")
     
     token = authorization.split("Bearer ")[1]
-    if token in ["mock_token", "dev_token", "test_token"]:
-        return CurrentUser(uid="dev_user_123", email="dev@example.com")
+
     try:
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token.get("uid")

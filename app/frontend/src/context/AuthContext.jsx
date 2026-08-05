@@ -12,22 +12,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      const activeUser = user || {
-        uid: "dev_user_123",
-        email: "dev@example.com",
-        displayName: "Dev Tester"
-      };
-      setCurrentUser(activeUser);
-      if (activeUser) {
+      setCurrentUser(user);
+      if (user) {
         try {
-          const providerData = activeUser.providerData?.[0] || {};
+          const providerData = user.providerData?.[0] || {};
           const { data } = await api.post("/users/sync", {
-            name: activeUser.displayName || providerData.displayName || "Dev Tester",
-            profile_picture: activeUser.photoURL || providerData.photoURL || "",
-            phone: activeUser.phoneNumber || providerData.phoneNumber || "",
+            name: user.displayName || providerData.displayName || "Dev Tester",
+            profile_picture: user.photoURL || providerData.photoURL || "",
+            phone: user.phoneNumber || providerData.phoneNumber || "",
             provider: providerData.providerId || "email"
-          }, {
-            headers: { Authorization: "Bearer mock_token" }
           });
           setDbUser(data);
         } catch (error) {

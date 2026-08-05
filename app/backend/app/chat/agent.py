@@ -49,7 +49,7 @@ async def create_entry(ctx: RunContext[ChatDependencies], amount: float, categor
         note: Any additional note.
     """
     body = EntryCreate(amount=amount, category=category, scope=scope, type=type, date=date, note=note)
-    entry_dict = body.to_paise_dict()
+    entry_dict = body.model_dump()
     entry_dict["user_id"] = ctx.deps.user_id
     entry = Entry(**entry_dict)
     await db.db.entries.insert_one(entry.model_dump())
@@ -72,7 +72,7 @@ async def get_financial_summary(ctx: RunContext[ChatDependencies], start_date: s
     }
     for d in docs:
         s = result[d["scope"]]
-        amount_inr = d["amount"] / 100.0  # Convert paise to rupees
+        amount_inr = d["amount"]
         s[d["type"]] += amount_inr
         key = d["category"]
         s["by_category"].setdefault(key, {"income": 0, "expense": 0})

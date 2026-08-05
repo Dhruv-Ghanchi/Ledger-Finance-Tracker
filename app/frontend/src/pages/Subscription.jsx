@@ -110,8 +110,8 @@ export default function SubscriptionPage() {
     );
   }
 
-  const isPremium = dbUser?.plan === "monthly" || dbUser?.plan === "yearly";
-  const planLabel = dbUser?.plan === "monthly" ? "Monthly" : dbUser?.plan === "yearly" ? "Yearly" : "Free Trial";
+  const isPremium = dbUser?.plan === "monthly" || dbUser?.plan === "yearly" || dbUser?.plan === "lifetime";
+  const planLabel = dbUser?.plan === "monthly" ? "Monthly" : dbUser?.plan === "yearly" ? "Yearly" : dbUser?.plan === "lifetime" ? "Lifetime" : "Free Trial";
   const expiryDate = getSubscriptionExpiry(dbUser, currentUser);
 
   return (
