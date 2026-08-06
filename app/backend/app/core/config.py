@@ -18,5 +18,12 @@ class Settings:
     RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
     RAZORPAY_PLAN_MONTHLY = os.environ.get("RAZORPAY_PLAN_MONTHLY", "")
     RAZORPAY_PLAN_YEARLY = os.environ.get("RAZORPAY_PLAN_YEARLY", "")
-    
+
+    # Email (SMTP) settings for sending contact-form messages
+    SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+    SMTP_USER = os.environ.get("SMTP_USER", "")
+    SMTP_PASSWORD = (os.environ.get("SMTP_PASSWORD", "") or "").strip()
+    CONTACT_EMAIL_TO = os.environ.get("CONTACT_EMAIL_TO", "dhruvghanchi.1@gmail.com")
+
 settings = Settings()
