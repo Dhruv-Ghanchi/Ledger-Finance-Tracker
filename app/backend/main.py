@@ -17,18 +17,27 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 app = FastAPI(title="SaaS Finance Tracker API")
 
-cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+# Normalize CORS origins: strip whitespace AND trailing slashes.
+# Browsers send Origin WITHOUT a trailing slash, so a config value like
+# "https://ledger-dhruv-ghanchi.vercel.app/" would never exact-match.
+cors_origins = [o.strip().rstrip("/") for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 if not cors_origins:
     cors_origins = ["*"]
 
-# In production, use regex for vercel.app subdomains (wildcards don't work in allow_origins)
-allow_origin_regex = None
-if settings.ENVIRONMENT == "production":
-    allow_origin_regex = r"https://.*\.vercel\.app$"
-    # Also allow the exact vercel URL if VERCEL_URL env var is set (Vercel sets this automatically)
-    vercel_url = os.environ.get("VERCEL_URL")
-    if vercel_url:
-        cors_origins.append(f"https://{vercel_url}")
+# Allow any vercel.app / onrender.com subdomain regardless of ENVIRONMENT.
+# Safe because allow_credentials=False. Browsers always send the Origin
+# header without a trailing slash. Anchored with $ so it works with both
+# re.match and re.fullmatch semantics.
+allow_origin_regex = r"^https?://.*\.(vercel\.app|onrender\.com)$"
+
+# If VERCEL_URL is set (Vercel does this automatically), allow that exact host too.
+vercel_url = os.environ.get("VERCEL_URL")
+if vercel_url:
+    cors_origins.append(f"https://{vercel_url}")
+
+logging.getLogger("uvicorn.error").info(
+    "CORS enabled: origins=%s regex=%s", cors_origins, allow_origin_regex
+)
 
 app.add_middleware(
     CORSMiddleware,
