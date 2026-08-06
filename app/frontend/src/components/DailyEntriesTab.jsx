@@ -62,8 +62,8 @@ export default function DailyEntriesTab({ entries, categories, onEdit, onDeleted
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <div className="relative flex-1 min-w-[220px] max-w-[380px]">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 mb-4 w-full">
+        <div className="relative w-full sm:flex-1 sm:min-w-[220px] sm:max-w-[380px]">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
@@ -93,12 +93,12 @@ export default function DailyEntriesTab({ entries, categories, onEdit, onDeleted
             <SelectItem value="expense">Expense</SelectItem>
           </SelectContent>
         </Select>
-        <div className="ml-auto text-xs font-mono text-muted-foreground">
+        <div className="sm:ml-auto w-full sm:w-auto text-xs font-mono text-muted-foreground text-right mt-2 sm:mt-0">
           {filtered.length} of {entries.length}
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-md overflow-hidden">
+      <div className="bg-card border border-border rounded-md overflow-hidden overflow-x-auto scrollbar-none w-full">
         <Table className="data-table">
           <TableHeader>
             <TableRow className="hover:bg-transparent">

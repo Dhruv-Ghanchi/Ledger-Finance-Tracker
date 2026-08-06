@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText, Menu } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -80,6 +81,38 @@ export default function Landing() {
                 </Link>
               </>
             )}
+
+            <div className="md:hidden flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <a href="#features" className="w-full">Features</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#how-it-works" className="w-full">How it works</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#pricing" className="w-full">Pricing</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#contact" className="w-full">Contact</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#faq" className="w-full">FAQ</a>
+                  </DropdownMenuItem>
+                  {!currentUser && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/login" className="w-full sm:hidden">Sign In</Link>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -90,7 +123,7 @@ export default function Landing() {
         <section className="w-full py-24 md:py-32 flex flex-col items-center text-center px-4">
           <div className="inline-flex items-center rounded-full border border-border px-3 py-1 text-sm mb-8 bg-muted/50 backdrop-blur text-muted-foreground">
             <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-            <span>Ledger AI & Smart OCR now live</span>
+            <span>KOIN AI & Smart OCR now live</span>
           </div>
           <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tight mb-6 max-w-4xl leading-tight">
             Take control of your <br className="hidden md:block" /> financial future.
@@ -121,9 +154,9 @@ export default function Landing() {
             <div className="w-full bg-background border border-border/60 rounded-t-xl shadow-2xl overflow-hidden flex flex-col relative z-10 mx-auto transform-gpu transition-all duration-700 hover:scale-[1.01]">
               
               {/* Actual Dashboard Header Replica */}
-              <div className="border-b border-border bg-background px-6 py-4 flex items-center justify-between">
+              <div className="border-b border-border bg-background px-4 sm:px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-md bg-foreground flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-md bg-foreground flex items-center justify-center shrink-0">
                     <span className="text-background font-display text-sm font-bold">₹</span>
                   </div>
                   <div className="hidden sm:block leading-tight text-left">
@@ -131,12 +164,12 @@ export default function Landing() {
                     <div className="text-[10px] uppercase tracking-widest text-muted-foreground">FY 2026-27</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="hidden sm:flex h-9 w-[140px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">FY 2026-27</div>
-                  <div className="hidden sm:flex h-9 w-[170px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">August 2026</div>
-                  <div className="h-9 px-3 rounded-md border border-input bg-transparent text-sm font-medium flex items-center gap-2 opacity-60"><Download className="w-4 h-4"/> Export</div>
-                  <div className="h-9 px-3 rounded-md bg-foreground text-background text-sm font-medium flex items-center gap-2"><Plus className="w-4 h-4"/> Add Entry</div>
-                  <div className="h-9 w-9 rounded-full border border-border bg-muted flex items-center justify-center ml-2"><User className="w-4 h-4 text-muted-foreground"/></div>
+                <div className="flex items-center gap-1 sm:gap-2 overflow-hidden">
+                  <div className="hidden md:flex h-9 w-[140px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">FY 2026-27</div>
+                  <div className="hidden lg:flex h-9 w-[170px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">August 2026</div>
+                  <div className="hidden sm:flex h-9 px-3 rounded-md border border-input bg-transparent text-sm font-medium items-center gap-2 opacity-60"><Download className="w-4 h-4"/> Export</div>
+                  <div className="h-9 px-2 sm:px-3 rounded-md bg-foreground text-background text-sm font-medium flex items-center gap-2 shrink-0"><Plus className="w-4 h-4"/> <span className="hidden sm:inline">Add Entry</span></div>
+                  <div className="h-9 w-9 shrink-0 rounded-full border border-border bg-muted flex items-center justify-center sm:ml-2"><User className="w-4 h-4 text-muted-foreground"/></div>
                 </div>
               </div>
               
@@ -187,11 +220,11 @@ export default function Landing() {
               <p className="text-muted-foreground max-w-2xl mx-auto">No clutter, no confusing menus. Just the tools you need to track your financial health.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="bg-background border-border shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                 <CardHeader>
                   <MessageSquare className="h-8 w-8 mb-4 text-foreground" />
-                  <CardTitle className="font-display">Ledger AI Assistant</CardTitle>
+                  <CardTitle className="font-display">KOIN AI Assistant</CardTitle>
                   <CardDescription className="text-sm">Chat naturally to log expenses, check balances, and query your financial habits effortlessly.</CardDescription>
                 </CardHeader>
               </Card>
@@ -207,6 +240,13 @@ export default function Landing() {
                   <FileText className="h-8 w-8 mb-4 text-foreground" />
                   <CardTitle className="font-display">PDF Statements</CardTitle>
                   <CardDescription className="text-sm">Download official monthly and yearly PDF invoices of your financial data for your records.</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card className="bg-background border-border shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                <CardHeader>
+                  <User className="h-8 w-8 mb-4 text-foreground" />
+                  <CardTitle className="font-display">IOUs & Debts</CardTitle>
+                  <CardDescription className="text-sm">Keep track of money you owe or are owed. Settle up seamlessly with built-in tracking.</CardDescription>
                 </CardHeader>
               </Card>
             </div>

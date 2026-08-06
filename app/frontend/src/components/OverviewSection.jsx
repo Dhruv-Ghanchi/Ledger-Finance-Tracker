@@ -20,7 +20,7 @@ function Kpi({ label, value, sub, tone = "default", testId }) {
   );
 }
 
-export default function OverviewSection({ monthly, yearly, year, month, fyStart }) {
+export default function OverviewSection({ monthly, yearly, year, month, fyStart, debts = [] }) {
   const totals = monthly?.totals || { income: 0, expense: 0, net: 0 };
   const personal = monthly?.personal || { income: 0, expense: 0, net: 0 };
   const business = monthly?.business || { income: 0, expense: 0, net: 0 };
@@ -55,6 +55,11 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
 
   const yearlyTotals = yearly?.totals || { total_income: 0, total_expense: 0, total_net: 0, personal_net: 0, business_net: 0 };
 
+  // Calculate Debts
+  const pendingDebts = debts.filter(d => d.status === "pending");
+  const totalToPay = pendingDebts.filter(d => d.type === "to_pay").reduce((sum, d) => sum + d.amount, 0);
+  const totalToCollect = pendingDebts.filter(d => d.type === "to_collect").reduce((sum, d) => sum + d.amount, 0);
+
   return (
     <section data-testid="overview-section">
       <div className="flex items-end justify-between mb-6">
@@ -70,7 +75,7 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <Kpi
           label="Total Income"
           value={formatINR(totals.income)}
@@ -96,6 +101,20 @@ export default function OverviewSection({ monthly, yearly, year, month, fyStart 
           tone="business"
           sub={`${business.net >= 0 ? "Surplus" : "Deficit"} (FY: ${formatINR(yearlyTotals.business_net, { compact: true, sign: true })})`}
           testId="kpi-net-business"
+        />
+        <Kpi
+          label="Total to Collect"
+          value={formatINR(totalToCollect)}
+          tone="personal"
+          sub={`${pendingDebts.filter(d => d.type === "to_collect").length} Pending IOUs`}
+          testId="kpi-to-collect"
+        />
+        <Kpi
+          label="Total to Pay"
+          value={formatINR(totalToPay)}
+          tone="business"
+          sub={`${pendingDebts.filter(d => d.type === "to_pay").length} Pending IOUs`}
+          testId="kpi-to-pay"
         />
       </div>
 

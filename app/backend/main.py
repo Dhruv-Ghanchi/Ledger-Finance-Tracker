@@ -10,6 +10,7 @@ from app.payments.routes import router as payments_router
 from app.contact.routes import router as contact_router
 from app.invoices.routes import router as invoices_router
 from app.chat.routes import router as chat_router
+from app.debts.routes import router as debts_router
 import logging
 import os
 
@@ -64,6 +65,7 @@ app.include_router(payments_router)
 app.include_router(contact_router)
 app.include_router(invoices_router)
 app.include_router(chat_router)
+app.include_router(debts_router)
 
 @app.get("/")
 @app.head("/")

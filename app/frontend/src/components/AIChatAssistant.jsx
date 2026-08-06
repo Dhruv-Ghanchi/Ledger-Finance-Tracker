@@ -91,7 +91,7 @@ function ScopeToggleWidget({ onSubmit }) {
 export default function AIChatAssistant() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! I'm Nova, your AI financial co-pilot. How can I help you today?" }
+    { role: "assistant", content: "Hi! I'm Koin, your AI financial co-pilot. How can I help you today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -193,7 +193,7 @@ export default function AIChatAssistant() {
                 <RobotFaceIcon className="w-6 h-6" />
               </div>
               <div className="flex flex-col">
-                <span className="font-display font-semibold text-[16px] leading-tight">Nova AI</span>
+                <span className="font-display font-semibold text-[16px] leading-tight">KOIN AI</span>
                 <span className="overline mt-0.5">Financial Co-Pilot</span>
               </div>
             </div>

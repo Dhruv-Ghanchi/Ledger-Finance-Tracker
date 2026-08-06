@@ -77,7 +77,13 @@ export default function ImportModal({ open, onOpenChange, onParsed }) {
         onParsed(res.data);
       }
     } catch (err) {
-      setError(err?.response?.data?.detail || "Failed to parse file. Ensure it's readable and try again.");
+      if (err?.response?.status === 403) {
+        onOpenChange(false);
+        setFile(null);
+        window.dispatchEvent(new CustomEvent("premiumRequired"));
+      } else {
+        setError(err?.response?.data?.detail || "Failed to parse file. Ensure it's readable and try again.");
+      }
     } finally {
       setLoading(false);
     }
