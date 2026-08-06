@@ -11,6 +11,10 @@ import tempfile
 import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 import pandas as pd
 import numpy as np
 
@@ -277,6 +281,66 @@ async def export_xlsx(
         stream,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment; filename=finance_export.xlsx"},
+    )
+
+@router.get("/export/pdf")
+async def export_pdf(
+    current_user: CurrentUser = Depends(get_current_user),
+    fy_start: Optional[int] = None,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    scope: Optional[str] = None,
+):
+    q = build_entries_query(current_user.firebase_uid, year, month, fy_start, scope)
+    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
+    
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    elements = []
+    
+    styles = getSampleStyleSheet()
+    title = f"Finance Export"
+    if scope:
+        title += f" ({scope.capitalize()})"
+    elements.append(Paragraph(title, styles['Title']))
+    elements.append(Spacer(1, 20))
+    
+    data = [["Date", "Scope", "Type", "Category", "Amount (INR)", "Note"]]
+    
+    for d in docs:
+        data.append([
+            d["date"],
+            d["scope"].capitalize(),
+            d["type"].capitalize(),
+            d["category"],
+            f'{d["amount"]:.2f}',
+            d.get("note", "")[:50]
+        ])
+        
+    t = Table(data, colWidths=[70, 60, 60, 100, 80, 180])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#09090b")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (4, 0), (4, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#f8fafc")),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#e2e8f0")),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+    ]))
+    
+    elements.append(t)
+    doc.build(elements)
+    
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=finance_export.pdf"},
     )
 
 

@@ -22,21 +22,31 @@ export default function BatchReviewModal({ open, onOpenChange, initialEntries, c
     }
   }, [open, initialEntries]);
 
-  const expenseCategories = useMemo(
-    () => (categories || [])
+  const expenseCategories = useMemo(() => {
+    const uniqueNames = new Set();
+    return (categories || [])
       .filter((c) => c.type === "expense")
       .filter((c) => !isFreeUser || c.is_preset)
-      .sort((a, b) => a.name.localeCompare(b.name)),
-    [categories, isFreeUser]
-  );
+      .filter((c) => {
+        if (uniqueNames.has(c.name)) return false;
+        uniqueNames.add(c.name);
+        return true;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [categories, isFreeUser]);
 
-  const incomeCategories = useMemo(
-    () => (categories || [])
+  const incomeCategories = useMemo(() => {
+    const uniqueNames = new Set();
+    return (categories || [])
       .filter((c) => c.type === "income")
       .filter((c) => !isFreeUser || c.is_preset)
-      .sort((a, b) => a.name.localeCompare(b.name)),
-    [categories, isFreeUser]
-  );
+      .filter((c) => {
+        if (uniqueNames.has(c.name)) return false;
+        uniqueNames.add(c.name);
+        return true;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [categories, isFreeUser]);
 
   const updateEntry = (index, field, value) => {
     const newEntries = [...entries];
