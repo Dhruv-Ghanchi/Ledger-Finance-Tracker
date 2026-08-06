@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 import uuid
 from app.auth.firebase import get_current_user, CurrentUser
 from app.core.db import db
+from app.core.email import send_email
+from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -66,4 +68,21 @@ async def submit_contact(request: Request, body: ContactRequest):
     
     logger.info(f"Contact form submitted by {body.email} from IP {client_ip}")
     
-    return {"ok": True, "message": "Message sent successfully"}
+    # Notify the site owner by email
+    subject = f"New contact message from {body.name}"
+    plain_body = (
+        f"New contact form submission on the Ledger landing page.\n\n"
+        f"Name: {body.name}\n"
+        f"Email: {body.email}\n\n"
+        f"Message:\n{body.message}\n"
+    )
+    html_body = (
+        "<h3>New contact form submission on the Ledger landing page</h3>"
+        f"<p><strong>Name:</strong> {body.name}</p>"
+        f"<p><strong>Email:</strong> <a href=\"mailto:{body.email}\">{body.email}</a></p>"
+        f"<p><strong>Message:</strong></p>"
+        f"<blockquote>{body.message}</blockquote>"
+    )
+    email_sent = await send_email(subject, settings.CONTACT_EMAIL_TO, plain_body, html_body)
+    
+    return {"ok": True, "message": "Message sent successfully", "email_sent": email_sent}
