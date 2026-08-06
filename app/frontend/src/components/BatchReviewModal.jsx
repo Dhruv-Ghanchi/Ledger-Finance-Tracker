@@ -7,10 +7,11 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, Trash2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { hasPremiumAccess } from "@/lib/premium";
 
 export default function BatchReviewModal({ open, onOpenChange, initialEntries, categories, onSaved }) {
   const { dbUser } = useAuth();
-  const isFreeUser = dbUser?.plan === "free" || dbUser?.plan === "trial";
+  const isFreeUser = !hasPremiumAccess(dbUser);
   
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(false);

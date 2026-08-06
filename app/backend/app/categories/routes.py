@@ -3,6 +3,7 @@ from typing import List
 from pydantic import BaseModel, ConfigDict
 import uuid
 from app.auth.firebase import get_current_user, CurrentUser
+from app.subscriptions.checker import require_premium
 from app.core.db import db
 
 router = APIRouter(prefix="/api/categories", tags=["categories"])
@@ -25,7 +26,11 @@ async def list_categories(current_user: CurrentUser = Depends(get_current_user))
     return [Category(**d) for d in docs]
 
 @router.post("", response_model=Category)
-async def add_category(body: CategoryCreate, current_user: CurrentUser = Depends(get_current_user)):
+async def add_category(
+    body: CategoryCreate,
+    current_user: CurrentUser = Depends(get_current_user),
+    _ = Depends(require_premium)
+):
     existing = await db.db.categories.find_one({"user_id": current_user.firebase_uid, "name": body.name, "type": body.type})
     if existing:
         raise HTTPException(status_code=400, detail="Category already exists")
@@ -41,7 +46,11 @@ async def add_category(body: CategoryCreate, current_user: CurrentUser = Depends
     return Category(**cat)
 
 @router.delete("/{cat_id}")
-async def delete_category(cat_id: str, current_user: CurrentUser = Depends(get_current_user)):
+async def delete_category(
+    cat_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    _ = Depends(require_premium)
+):
     doc = await db.db.categories.find_one({"id": cat_id, "user_id": current_user.firebase_uid}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Not found")

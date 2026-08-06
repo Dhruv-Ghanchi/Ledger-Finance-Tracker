@@ -3,19 +3,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Lock, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Lock } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { hasPremiumAccess } from "@/lib/premium";
 
 export default function CategoriesManager({ open, onOpenChange, categories, onChanged }) {
   const { dbUser } = useAuth();
   const [name, setName] = useState("");
   const [type, setType] = useState("expense");
   const [busy, setBusy] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const isFreeUser = dbUser?.plan === "free" || dbUser?.plan === "trial";
+  const isFreeUser = !hasPremiumAccess(dbUser);
 
   const grouped = useMemo(() => {
     const g = { expense: [], income: [] };
@@ -29,7 +28,7 @@ export default function CategoriesManager({ open, onOpenChange, categories, onCh
     if (!name.trim()) return toast.error("Enter a name");
     
     if (isFreeUser) {
-      setShowUpgradeModal(true);
+      window.dispatchEvent(new CustomEvent("premiumRequired"));
       return;
     }
     
@@ -56,15 +55,8 @@ export default function CategoriesManager({ open, onOpenChange, categories, onCh
     }
   };
 
-  const handleUpgradeClick = () => {
-    setShowUpgradeModal(false);
-    onOpenChange(false);
-    window.location.href = "/pricing?auto_upgrade=monthly";
-  };
-
   return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-[440px]" data-testid="categories-sheet">
           <SheetHeader>
             <SheetTitle className="font-display tracking-tight text-2xl">Categories</SheetTitle>
@@ -144,7 +136,7 @@ export default function CategoriesManager({ open, onOpenChange, categories, onCh
                     variant="outline"
                     size="sm"
                     className="w-full mt-2 gap-2"
-                    onClick={() => setShowUpgradeModal(true)}
+                    onClick={() => window.dispatchEvent(new CustomEvent("premiumRequired"))}
                     data-testid={`upgrade-${key}`}
                   >
                     <Plus className="w-4 h-4" /> Add Custom Category
@@ -155,32 +147,5 @@ export default function CategoriesManager({ open, onOpenChange, categories, onCh
           </div>
         </SheetContent>
       </Sheet>
-
-      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <AlertCircle className="w-10 h-10 text-yellow-500 mx-auto mb-4" />
-            <DialogTitle className="font-display text-2xl tracking-tight text-center">
-              Premium Feature
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Custom categories are available only for Premium subscribers.
-              Upgrade to unlock unlimited custom categories and more features.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2">
-            <Button
-              onClick={handleUpgradeClick}
-              className="w-full bg-foreground text-background hover:bg-foreground/90"
-            >
-              Upgrade to Premium
-            </Button>
-            <Button variant="outline" onClick={() => setShowUpgradeModal(false)} className="w-full">
-              Maybe Later
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }

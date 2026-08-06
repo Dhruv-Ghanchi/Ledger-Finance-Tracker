@@ -48,7 +48,7 @@ export const MONTH_LABELS_LONG = [
 ];
 
 export function getSubscriptionExpiry(dbUser, currentUser) {
-  if (dbUser?.plan === "lifetime") return "Lifetime";
+  if (dbUser?.plan === "lifetime" || dbUser?.plan === "lifetimefree") return "Lifetime";
   
   if (dbUser?.subscription_expiry) return new Date(dbUser.subscription_expiry).toLocaleDateString();
   if (dbUser?.trial_end) return new Date(dbUser.trial_end).toLocaleDateString();

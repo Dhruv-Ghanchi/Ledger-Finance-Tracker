@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
+from conftest import run_async
 from app.chat.agent import agent, ChatDependencies
 from app.chat.routes import chat_endpoint, ChatRequest
 
@@ -26,24 +27,20 @@ def has_card_token(text: str) -> bool:
     return CARD_TOKEN in (text or "")
 
 
-def run_async(coro):
-    return asyncio.new_event_loop().run_until_complete(coro)
-
-
 # ---------------------------------------------------------------- auth / validation
 
 def test_chat_requires_auth(unauth_client):
-    r = unauth_client.post("/api/chat", json={"messages": [{"role": "user", "content": "hi"}]})
+    r = run_async(unauth_client.post("/api/chat", json={"messages": [{"role": "user", "content": "hi"}]}))
     assert r.status_code == 401
 
 
 def test_chat_empty_messages(client):
-    r = client.post("/api/chat", json={"messages": []})
+    r = run_async(client.post("/api/chat", json={"messages": []}))
     assert r.status_code == 400
 
 
 def test_chat_missing_messages_field(client):
-    r = client.post("/api/chat", json={})
+    r = run_async(client.post("/api/chat", json={}))
     assert r.status_code == 422
 
 
@@ -137,10 +134,10 @@ def test_fallback_to_groq_when_gemini_fails_over_http(client, monkeypatch):
 
     routes.agent.run = simulated_run
     try:
-        r = client.post(
+        r = run_async(client.post(
             "/api/chat",
             json={"messages": [{"role": "user", "content": "hello"}]},
-        )
+        ))
         assert r.status_code == 200
         assert r.json()["response"] == "FALLBACK_OK_OVER_HTTP"
         assert calls["n"] >= 2
@@ -158,10 +155,10 @@ def test_fallback_fails_returns_500(client, monkeypatch):
 
     routes.agent.run = always_fail
     try:
-        r = client.post(
+        r = run_async(client.post(
             "/api/chat",
             json={"messages": [{"role": "user", "content": "hello"}]},
-        )
+        ))
         assert r.status_code == 500
         assert "AI service temporarily unavailable" in r.json()["detail"]
     finally:

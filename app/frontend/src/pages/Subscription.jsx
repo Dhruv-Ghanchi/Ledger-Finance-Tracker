@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CreditCard, Calendar, AlertCircle, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatINR, getSubscriptionExpiry } from "@/lib/format";
+import { hasPremiumAccess, isPaidPlan, isTrialActive } from "@/lib/premium";
 
 export default function SubscriptionPage() {
   const { dbUser, currentUser } = useAuth();
@@ -110,8 +111,10 @@ export default function SubscriptionPage() {
     );
   }
 
-  const isPremium = dbUser?.plan === "monthly" || dbUser?.plan === "yearly" || dbUser?.plan === "lifetime";
-  const planLabel = dbUser?.plan === "monthly" ? "Monthly" : dbUser?.plan === "yearly" ? "Yearly" : dbUser?.plan === "lifetime" ? "Lifetime" : "Free Trial";
+  const isPremium = hasPremiumAccess(dbUser);
+  const paidPlan = isPaidPlan(dbUser);
+  const onTrial = isTrialActive(dbUser);
+  const planLabel = dbUser?.plan === "monthly" ? "Monthly" : dbUser?.plan === "yearly" ? "Yearly" : (dbUser?.plan === "lifetime" || dbUser?.plan === "lifetimefree") ? "Lifetime" : onTrial ? "Free Trial" : "Free";
   const expiryDate = getSubscriptionExpiry(dbUser, currentUser);
 
   return (
@@ -153,11 +156,11 @@ export default function SubscriptionPage() {
                   <div>
                     <div className="font-display text-2xl font-semibold">{planLabel} Plan</div>
                     <div className="text-sm text-muted-foreground">
-                      {isPremium ? "Active subscription" : "Free trial - 60 days"}
+                      {paidPlan ? "Active subscription" : onTrial ? "Trial active" : "Free plan"}
                     </div>
                   </div>
                 </div>
-                {isPremium && expiryDate && (
+                {paidPlan && expiryDate && (
                   <div className="text-right">
                     <div className="text-xs text-muted-foreground uppercase tracking-widest">Renews on</div>
                     <div className="font-mono font-semibold">{expiryDate}</div>
@@ -196,26 +199,36 @@ export default function SubscriptionPage() {
 
               {isPremium && (
                 <div className="border-t border-border pt-4">
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleCancel}
-                    disabled={cancelling}
-                    className="w-full"
-                  >
-                    {cancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <>Cancel Subscription</>}
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    You'll retain premium access until the end of your current billing period.
-                  </p>
+                  {paidPlan && (
+                    <>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleCancel}
+                        disabled={cancelling}
+                        className="w-full"
+                      >
+                        {cancelling ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <>Cancel Subscription</>}
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        You'll retain premium access until the end of your current billing period.
+                      </p>
+                    </>
+                  )}
+                  {onTrial && expiryDate && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <AlertCircle className="w-4 h-4 text-blue-500" />
+                      <span>Trial active until <strong>{expiryDate}</strong>. Enjoy full premium access during your trial.</span>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Trial/Free plan info */}
+              {/* Free plan info */}
               {!isPremium && expiryDate && (
                 <div className="border-t border-border pt-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <AlertCircle className="w-4 h-4 text-yellow-500" />
-                    <span>Trial ends on <strong>{expiryDate}</strong>. Upgrade to continue with premium features.</span>
+                    <span>Trial ended on <strong>{expiryDate}</strong>. Upgrade to continue with premium features.</span>
                   </div>
                 </div>
               )}
@@ -273,8 +286,8 @@ export default function SubscriptionPage() {
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> All premium features for 60 days</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Unlimited entries</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Export data (CSV/Excel)</li>
-                    <li className="flex items-center gap-2"><XCircle className="w-4 h-4 text-muted-foreground" /> Custom categories</li>
-                    <li className="flex items-center gap-2"><XCircle className="w-4 h-4 text-muted-foreground" /> Advanced reports</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Custom categories (unlimited)</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Advanced reports & analytics</li>
                   </ul>
                 </div>
                 <div className="space-y-3">
