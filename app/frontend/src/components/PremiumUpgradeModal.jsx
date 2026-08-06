@@ -75,7 +75,7 @@ export default function PremiumUpgradeModal() {
           </div>
           <DialogTitle className="text-2xl font-display font-bold">Unlock Ledger Premium</DialogTitle>
           <DialogDescription className="mt-2 text-base">
-            Your free trial has expired. Upgrade to continue using our powerful smart features.
+            This is a premium feature. Upgrade to Ledger Premium to unlock it and all our powerful smart features.
           </DialogDescription>
         </div>
         

@@ -43,7 +43,7 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
             "plan": "trial",
-            "subscription_status": "active",
+            "subscription_status": "trial",
             "trial_start": now.isoformat(),
             "trial_end": (now + timedelta(days=60)).isoformat(),
             "subscription_expiry": None
@@ -64,6 +64,19 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
                 updates["profile_picture"] = body.profile_picture
             if body.phone and not user.get("phone"):
                 updates["phone"] = body.phone
+                
+        # One-time 60-day trial grant for existing users who never had one.
+        # Covers users created before the trial feature, plus anyone currently
+        # on the free plan. A user's trial is never reset once started.
+        existing_plan = user.get("plan")
+        if not user.get("trial_start") and not user.get("trial_end") and existing_plan not in (
+            "monthly", "yearly", "lifetime", "lifetimefree"
+        ):
+            updates["plan"] = "trial"
+            updates["subscription_status"] = "trial"
+            updates["trial_start"] = now.isoformat()
+            updates["trial_end"] = (now + timedelta(days=60)).isoformat()
+            updates["subscription_expiry"] = None
                 
         if updates:
             updates["updated_at"] = now.isoformat()

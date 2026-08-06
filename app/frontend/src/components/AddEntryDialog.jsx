@@ -9,10 +9,11 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, Lock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { hasPremiumAccess } from "@/lib/premium";
 
 export default function AddEntryDialog({ open, onOpenChange, categories, onSaved, editing }) {
   const { dbUser } = useAuth();
-  const isFreeUser = dbUser?.plan === "free" || dbUser?.plan === "trial";
+  const isFreeUser = !hasPremiumAccess(dbUser);
   const today = new Date().toISOString().slice(0, 10);
   const [scope, setScope] = useState("personal");
   const [type, setType] = useState("expense");
