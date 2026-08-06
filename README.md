@@ -17,9 +17,11 @@ Moving beyond traditional manual entry, Ledger leverages advanced Artificial Int
 Ledger goes beyond standard dashboards by integrating intelligent automation directly into your financial workflow.
 
 ### 🤖 AI-Powered Capabilities (Premium)
-- **Nova AI Co-pilot**: Chat with your personalized AI assistant. Ask questions like *"How much did I spend on food this month?"* or *"Log a $50 business travel expense"* and watch Nova instantly analyze your data or log entries for you.
+- **KOIN AI Co-pilot**: Chat with your personalized AI assistant. Ask questions like *"How much did I spend on food this month?"* or *"Log a $50 business travel expense"* and watch KOIN instantly analyze your data or log entries for you.
+- **IOUs & Debts Tracking**: Keep a meticulous record of money you owe or are owed. Create entries, settle them partially or fully, and watch your Dashboard update seamlessly.
 - **Smart Receipt & Invoice Extraction**: Simply upload a photo of a receipt or a PDF statement. Our AI instantly extracts the date, amount, category, and vendor, turning unstructured images into perfectly categorized financial data.
 - **Professional PDF Generation**: Instantly generate and download beautiful, itemized PDF invoices and financial statements with a single click.
+- **Fully Responsive Mobile Design**: Beautiful on any device. Navigate your dashboard, view data tables, and interact with the UI flawlessly on phones, tablets, and desktops.
 
 ### 💼 Core Financial Tracking
 - **Dual Workspace Scope**: Switch seamlessly between **Personal** and **Business** workspaces to keep your finances strictly separated but easily accessible.
@@ -91,7 +93,7 @@ npm start
 2. **Log Transactions**: 
    - *Manual*: Click "Add Entry", select your scope (Personal/Business), and enter the details.
    - *AI Import*: Click "Import Receipt", upload a photo of your bill, and let the AI fill out the form for you.
-3. **Chat with Nova**: Click the AI Assistant button in the bottom right corner to ask questions about your spending trends or to log expenses conversationally.
+3. **Chat with KOIN**: Click the AI Assistant button in the bottom right corner to ask questions about your spending trends or to log expenses conversationally.
 4. **Generate Reports**: Use the "Export" button on the dashboard to download CSVs, or generate professional PDF statements directly from the Yearly Summary tab.
 5. **Upgrade**: Once your trial expires, visit the Pricing page to seamlessly subscribe via Razorpay.
 
@@ -108,7 +110,7 @@ This project welcomes contributions. Feel free to fork and adapt. If you find a 
 - **[FastAPI](https://fastapi.tiangolo.com)** for the robust backend  
 - **[Firebase](https://firebase.google.com)** for robust multi-user authentication
 - **[Razorpay](https://razorpay.com)** for smooth payment gateways
-- **Google Gemini** for powering the Nova AI features
+- **Google Gemini** for powering the KOIN AI features
 - **Serena MCP & Ponytail** for accelerating agentic AI development.
 
 ---

@@ -32,9 +32,9 @@ describe("AIChatAssistant", () => {
   it("opens the chat window with a greeting when the robot is clicked", () => {
     const { container } = render(<AIChatAssistant />);
     fireEvent.click(container.querySelector("button"));
-    expect(screen.getByText(/Nova AI/)).toBeInTheDocument();
+    expect(screen.getByText(/KOIN AI/)).toBeInTheDocument();
     expect(
-      screen.getByText(/Hi! I'm Nova, your AI financial co-pilot/)
+      screen.getByText(/Hi! I'm Koin, your AI financial co-pilot/)
     ).toBeInTheDocument();
   });
 

@@ -123,7 +123,7 @@ export default function Landing() {
         <section className="w-full py-24 md:py-32 flex flex-col items-center text-center px-4">
           <div className="inline-flex items-center rounded-full border border-border px-3 py-1 text-sm mb-8 bg-muted/50 backdrop-blur text-muted-foreground">
             <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-            <span>Ledger AI & Smart OCR now live</span>
+            <span>KOIN AI & Smart OCR now live</span>
           </div>
           <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tight mb-6 max-w-4xl leading-tight">
             Take control of your <br className="hidden md:block" /> financial future.
@@ -220,11 +220,11 @@ export default function Landing() {
               <p className="text-muted-foreground max-w-2xl mx-auto">No clutter, no confusing menus. Just the tools you need to track your financial health.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="bg-background border-border shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                 <CardHeader>
                   <MessageSquare className="h-8 w-8 mb-4 text-foreground" />
-                  <CardTitle className="font-display">Ledger AI Assistant</CardTitle>
+                  <CardTitle className="font-display">KOIN AI Assistant</CardTitle>
                   <CardDescription className="text-sm">Chat naturally to log expenses, check balances, and query your financial habits effortlessly.</CardDescription>
                 </CardHeader>
               </Card>
@@ -240,6 +240,13 @@ export default function Landing() {
                   <FileText className="h-8 w-8 mb-4 text-foreground" />
                   <CardTitle className="font-display">PDF Statements</CardTitle>
                   <CardDescription className="text-sm">Download official monthly and yearly PDF invoices of your financial data for your records.</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card className="bg-background border-border shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                <CardHeader>
+                  <User className="h-8 w-8 mb-4 text-foreground" />
+                  <CardTitle className="font-display">IOUs & Debts</CardTitle>
+                  <CardDescription className="text-sm">Keep track of money you owe or are owed. Settle up seamlessly with built-in tracking.</CardDescription>
                 </CardHeader>
               </Card>
             </div>
