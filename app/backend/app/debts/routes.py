@@ -139,6 +139,7 @@ async def settle_debt(
     }
     
     await db.db.entries.insert_one(entry)
+    entry.pop("_id", None)
     
     debt["status"] = "settled"
     debt["settled_at"] = now
