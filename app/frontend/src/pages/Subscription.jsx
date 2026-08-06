@@ -29,7 +29,7 @@ export default function SubscriptionPage() {
         api.get("/payments/history"),
       ]);
       setSubscription(subRes.data);
-      setPaymentHistory(payRes.data || []);
+      setPaymentHistory(Array.isArray(payRes.data) ? payRes.data : (payRes.data?.payments || []));
     } catch (e) {
       console.error("Failed to fetch subscription", e);
     } finally {
