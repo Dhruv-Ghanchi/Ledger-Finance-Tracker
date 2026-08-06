@@ -22,6 +22,9 @@ import ExportModal from "@/components/ExportModal";
 import ImportModal from "@/components/ImportModal";
 import BatchReviewModal from "@/components/BatchReviewModal";
 import AIChatAssistant from "@/components/AIChatAssistant";
+import DebtsTab from "@/components/DebtsTab";
+import AddDebtDialog from "@/components/AddDebtDialog";
+import SettleDebtDialog from "@/components/SettleDebtDialog";
 
 const fetcher = (url) => api.get(url).then((r) => r.data);
 
@@ -38,12 +41,18 @@ export default function Dashboard() {
   const [importOpen, setImportOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewEntries, setReviewEntries] = useState([]);
+  
+  const [debtAddOpen, setDebtAddOpen] = useState(false);
+  const [editingDebt, setEditingDebt] = useState(null);
+  const [settleDebtOpen, setSettleDebtOpen] = useState(false);
+  const [debtToSettle, setDebtToSettle] = useState(null);
 
   const fyOptions = useMemo(() => recentFYs(10), []);
   const monthsInFY = useMemo(() => fyMonths(fyStart), [fyStart]);
 
   const { data: categories = [] } = useSWR("/categories", fetcher);
   const { data: entries = [] } = useSWR(`/entries?fy_start=${fyStart}`, fetcher);
+  const { data: debts = [] } = useSWR("/debts", fetcher);
   const { data: monthly } = useSWR(`/summary/monthly?year=${year}&month=${month}`, fetcher);
   const { data: yearly } = useSWR(`/summary/yearly?fy_start=${fyStart}`, fetcher);
 
@@ -79,6 +88,7 @@ export default function Dashboard() {
     }
     swrMutate("/categories");
     swrMutate(`/entries?fy_start=${fyStart}`);
+    swrMutate("/debts");
     swrMutate(`/summary/monthly?year=${year}&month=${month}`);
     swrMutate(`/summary/yearly?fy_start=${fyStart}`);
   }, [fyStart, year, month, focusDate]);
@@ -115,6 +125,45 @@ export default function Dashboard() {
       toast.success("Invoice downloaded");
     } catch (e) {
       toast.error("Invoice download failed");
+    }
+  };
+
+  const handleSaveDebt = async (debtData) => {
+    try {
+      if (debtData.id) {
+        await api.put(`/debts/${debtData.id}`, debtData);
+        toast.success("IOU updated");
+      } else {
+        await api.post("/debts", debtData);
+        toast.success("IOU added");
+      }
+      setDebtAddOpen(false);
+      swrMutate("/debts");
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to save IOU");
+    }
+  };
+
+  const handleDeleteDebt = async (id) => {
+    if (window.confirm("Are you sure you want to delete this IOU?")) {
+      try {
+        await api.delete(`/debts/${id}`);
+        toast.success("IOU deleted");
+        swrMutate("/debts");
+      } catch (e) {
+        toast.error("Failed to delete IOU");
+      }
+    }
+  };
+
+  const handleSettleDebt = async (id, data) => {
+    try {
+      await api.post(`/debts/${id}/settle`, data);
+      toast.success("IOU settled successfully!");
+      setSettleDebtOpen(false);
+      refreshAll();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to settle IOU");
     }
   };
 
@@ -253,6 +302,7 @@ export default function Dashboard() {
           year={year}
           month={month}
           fyStart={fyStart}
+          debts={debts}
         />
 
         <div className="mt-10">
@@ -279,6 +329,13 @@ export default function Dashboard() {
               >
                 Yearly Summary
               </TabsTrigger>
+              <TabsTrigger
+                value="debts"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight"
+                data-testid="tab-debts"
+              >
+                IOUs & Debts
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="daily" className="mt-6">
@@ -294,6 +351,15 @@ export default function Dashboard() {
             </TabsContent>
             <TabsContent value="yearly" className="mt-6">
               <YearlySummaryTab yearly={yearly} fyStart={fyStart} />
+            </TabsContent>
+            <TabsContent value="debts" className="mt-6">
+              <DebtsTab 
+                debts={debts}
+                onAdd={() => { setEditingDebt(null); setDebtAddOpen(true); }}
+                onEdit={(d) => { setEditingDebt(d); setDebtAddOpen(true); }}
+                onDelete={handleDeleteDebt}
+                onSettle={(d) => { setDebtToSettle(d); setSettleDebtOpen(true); }}
+              />
             </TabsContent>
           </Tabs>
         </div>
@@ -332,6 +398,22 @@ export default function Dashboard() {
         categories={categories}
         onSaved={() => refreshAll()}
       />
+
+      <AddDebtDialog
+        open={debtAddOpen}
+        onOpenChange={setDebtAddOpen}
+        onSave={handleSaveDebt}
+        editingDebt={editingDebt}
+      />
+
+      <SettleDebtDialog
+        open={settleDebtOpen}
+        onOpenChange={setSettleDebtOpen}
+        debt={debtToSettle}
+        onConfirm={handleSettleDebt}
+        categories={categories}
+      />
+
       <AIChatAssistant />
     </div>
   );
