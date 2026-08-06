@@ -21,13 +21,10 @@ cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()
 if not cors_origins:
     cors_origins = ["*"]
 
-# In production, be more permissive with CORS (credentials=False so it's safe)
+# In production, use regex for vercel.app subdomains (wildcards don't work in allow_origins)
+allow_origin_regex = None
 if settings.ENVIRONMENT == "production":
-    # Allow all vercel.app subdomains and render.com subdomains
-    cors_origins.extend([
-        "https://*.vercel.app",
-        "https://*.onrender.com",
-    ])
+    allow_origin_regex = r"https://.*\.vercel\.app$"
     # Also allow the exact vercel URL if VERCEL_URL env var is set (Vercel sets this automatically)
     vercel_url = os.environ.get("VERCEL_URL")
     if vercel_url:
@@ -39,7 +36,7 @@ app.add_middleware(
     allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origin_regex=r"https://.*\.vercel\.app$" if settings.ENVIRONMENT == "production" else None,
+    allow_origin_regex=allow_origin_regex,
 )
 
 @app.on_event("startup")
