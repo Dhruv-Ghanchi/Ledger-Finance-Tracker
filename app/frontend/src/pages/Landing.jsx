@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText, Menu } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -80,6 +81,38 @@ export default function Landing() {
                 </Link>
               </>
             )}
+
+            <div className="md:hidden flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <a href="#features" className="w-full">Features</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#how-it-works" className="w-full">How it works</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#pricing" className="w-full">Pricing</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#contact" className="w-full">Contact</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#faq" className="w-full">FAQ</a>
+                  </DropdownMenuItem>
+                  {!currentUser && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/login" className="w-full sm:hidden">Sign In</Link>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -121,9 +154,9 @@ export default function Landing() {
             <div className="w-full bg-background border border-border/60 rounded-t-xl shadow-2xl overflow-hidden flex flex-col relative z-10 mx-auto transform-gpu transition-all duration-700 hover:scale-[1.01]">
               
               {/* Actual Dashboard Header Replica */}
-              <div className="border-b border-border bg-background px-6 py-4 flex items-center justify-between">
+              <div className="border-b border-border bg-background px-4 sm:px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-md bg-foreground flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-md bg-foreground flex items-center justify-center shrink-0">
                     <span className="text-background font-display text-sm font-bold">₹</span>
                   </div>
                   <div className="hidden sm:block leading-tight text-left">
@@ -131,12 +164,12 @@ export default function Landing() {
                     <div className="text-[10px] uppercase tracking-widest text-muted-foreground">FY 2026-27</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="hidden sm:flex h-9 w-[140px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">FY 2026-27</div>
-                  <div className="hidden sm:flex h-9 w-[170px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">August 2026</div>
-                  <div className="h-9 px-3 rounded-md border border-input bg-transparent text-sm font-medium flex items-center gap-2 opacity-60"><Download className="w-4 h-4"/> Export</div>
-                  <div className="h-9 px-3 rounded-md bg-foreground text-background text-sm font-medium flex items-center gap-2"><Plus className="w-4 h-4"/> Add Entry</div>
-                  <div className="h-9 w-9 rounded-full border border-border bg-muted flex items-center justify-center ml-2"><User className="w-4 h-4 text-muted-foreground"/></div>
+                <div className="flex items-center gap-1 sm:gap-2 overflow-hidden">
+                  <div className="hidden md:flex h-9 w-[140px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">FY 2026-27</div>
+                  <div className="hidden lg:flex h-9 w-[170px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm opacity-60 items-center justify-between">August 2026</div>
+                  <div className="hidden sm:flex h-9 px-3 rounded-md border border-input bg-transparent text-sm font-medium items-center gap-2 opacity-60"><Download className="w-4 h-4"/> Export</div>
+                  <div className="h-9 px-2 sm:px-3 rounded-md bg-foreground text-background text-sm font-medium flex items-center gap-2 shrink-0"><Plus className="w-4 h-4"/> <span className="hidden sm:inline">Add Entry</span></div>
+                  <div className="h-9 w-9 shrink-0 rounded-full border border-border bg-muted flex items-center justify-center sm:ml-2"><User className="w-4 h-4 text-muted-foreground"/></div>
                 </div>
               </div>
               

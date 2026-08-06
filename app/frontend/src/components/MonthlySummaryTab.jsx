@@ -39,7 +39,7 @@ function ScopePanel({ title, tone, data }) {
           </div>
         </div>
       </div>
-      <div className="border-t border-border">
+      <div className="border-t border-border overflow-x-auto w-full">
         {byCat.length === 0 ? (
           <div className="p-6 text-xs text-muted-foreground">No entries.</div>
         ) : (

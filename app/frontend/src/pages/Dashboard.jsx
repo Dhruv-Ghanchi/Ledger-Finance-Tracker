@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Download, UploadCloud, LogOut, FileSpreadsheet, FileText, User, Settings, Home, CreditCard, ReceiptText, ChevronDown } from "lucide-react";
+import { Plus, Download, UploadCloud, LogOut, FileSpreadsheet, FileText, User, Settings, Home, CreditCard, ReceiptText, ChevronDown, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { currentFYStart, recentFYs, fyLabel, fyMonths } from "@/lib/fy";
@@ -182,63 +182,118 @@ export default function Dashboard() {
           </Link>
 
           <div className="flex items-center gap-2 ml-auto">
-            <Select value={String(fyStart)} onValueChange={(v) => setFyStart(Number(v))}>
-              <SelectTrigger className="h-9 w-[140px] rounded-md" data-testid="fy-select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {fyOptions.map((f) => (
-                  <SelectItem key={f} value={String(f)}>{fyLabel(f)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Desktop Navigation & Actions */}
+            <div className="hidden md:flex items-center gap-2">
+              <Select value={String(fyStart)} onValueChange={(v) => setFyStart(Number(v))}>
+                <SelectTrigger className="h-9 w-[140px] rounded-md" data-testid="fy-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fyOptions.map((f) => (
+                    <SelectItem key={f} value={String(f)}>{fyLabel(f)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={`${year}-${month}`}
-              onValueChange={(v) => {
-                const [y, m] = v.split("-").map(Number);
-                setYear(y); setMonth(m);
-              }}
-            >
-              <SelectTrigger className="h-9 w-[170px] rounded-md" data-testid="month-select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {monthsInFY.map((m) => (
-                  <SelectItem key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>
-                    {MONTH_LABELS_LONG[m.month - 1]} {m.year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select
+                value={`${year}-${month}`}
+                onValueChange={(v) => {
+                  const [y, m] = v.split("-").map(Number);
+                  setYear(y); setMonth(m);
+                }}
+              >
+                <SelectTrigger className="h-9 w-[170px] rounded-md" data-testid="month-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthsInFY.map((m) => (
+                    <SelectItem key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>
+                      {MONTH_LABELS_LONG[m.month - 1]} {m.year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Button
-              onClick={() => setImportOpen(true)}
-              variant="outline"
-              size="sm"
-              className="h-9 gap-2 rounded-md border-border"
-              data-testid="import-btn"
-            >
-              <UploadCloud className="w-4 h-4" /> Import
-            </Button>
+              <Button
+                onClick={() => setImportOpen(true)}
+                variant="outline"
+                size="sm"
+                className="h-9 gap-2 rounded-md border-border"
+                data-testid="import-btn"
+              >
+                <UploadCloud className="w-4 h-4" /> Import
+              </Button>
 
-            <Button
-              onClick={() => setExportOpen(true)}
-              variant="outline"
-              size="sm"
-              className="h-9 gap-2 rounded-md border-border"
-              data-testid="advanced-export-btn"
-            >
-              <Download className="w-4 h-4" /> Export
-            </Button>
+              <Button
+                onClick={() => setExportOpen(true)}
+                variant="outline"
+                size="sm"
+                className="h-9 gap-2 rounded-md border-border"
+                data-testid="advanced-export-btn"
+              >
+                <Download className="w-4 h-4" /> Export
+              </Button>
+            </div>
 
+            {/* Mobile Navigation Menu */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9 rounded-md border-border">
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Time Period</DropdownMenuLabel>
+                  <div className="px-2 pb-2 flex flex-col gap-2">
+                    <Select value={String(fyStart)} onValueChange={(v) => setFyStart(Number(v))}>
+                      <SelectTrigger className="h-9 w-full rounded-md">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fyOptions.map((f) => (
+                          <SelectItem key={f} value={String(f)}>{fyLabel(f)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={`${year}-${month}`}
+                      onValueChange={(v) => {
+                        const [y, m] = v.split("-").map(Number);
+                        setYear(y); setMonth(m);
+                      }}
+                    >
+                      <SelectTrigger className="h-9 w-full rounded-md">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {monthsInFY.map((m) => (
+                          <SelectItem key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>
+                            {MONTH_LABELS_LONG[m.month - 1]} {m.year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                    <UploadCloud className="w-4 h-4 mr-2" /> Import
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setExportOpen(true)}>
+                    <Download className="w-4 h-4 mr-2" /> Export
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Primary Action - Visible on all screens */}
             <Button
               onClick={() => { setEditing(null); setAddOpen(true); }}
               size="sm"
-              className="h-9 gap-2 rounded-md bg-foreground text-background hover:bg-foreground/90"
+              className="h-9 gap-2 rounded-md bg-foreground text-background hover:bg-foreground/90 px-3 sm:px-4"
               data-testid="add-entry-btn"
             >
-              <Plus className="w-4 h-4" /> Add Entry
+              <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Entry</span>
             </Button>
 
             <DropdownMenu>
@@ -307,36 +362,38 @@ export default function Dashboard() {
 
         <div className="mt-10">
           <Tabs defaultValue="daily" className="w-full">
-            <TabsList className="bg-transparent p-0 h-auto border-b border-border rounded-none w-full justify-start gap-8">
-              <TabsTrigger
-                value="daily"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight"
-                data-testid="tab-daily"
-              >
-                Daily Entries
-              </TabsTrigger>
-              <TabsTrigger
-                value="monthly"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight"
-                data-testid="tab-monthly"
-              >
-                Monthly Summary
-              </TabsTrigger>
-              <TabsTrigger
-                value="yearly"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight"
-                data-testid="tab-yearly"
-              >
-                Yearly Summary
-              </TabsTrigger>
-              <TabsTrigger
-                value="debts"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight"
-                data-testid="tab-debts"
-              >
-                IOUs & Debts
-              </TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto scrollbar-none border-b border-border">
+              <TabsList className="bg-transparent p-0 h-auto rounded-none w-max justify-start gap-8 min-w-full">
+                <TabsTrigger
+                  value="daily"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight whitespace-nowrap"
+                  data-testid="tab-daily"
+                >
+                  Daily Entries
+                </TabsTrigger>
+                <TabsTrigger
+                  value="monthly"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight whitespace-nowrap"
+                  data-testid="tab-monthly"
+                >
+                  Monthly Summary
+                </TabsTrigger>
+                <TabsTrigger
+                  value="yearly"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight whitespace-nowrap"
+                  data-testid="tab-yearly"
+                >
+                  Yearly Summary
+                </TabsTrigger>
+                <TabsTrigger
+                  value="debts"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-display text-base tracking-tight whitespace-nowrap"
+                  data-testid="tab-debts"
+                >
+                  IOUs & Debts
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="daily" className="mt-6">
               <DailyEntriesTab

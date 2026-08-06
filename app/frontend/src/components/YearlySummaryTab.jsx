@@ -12,7 +12,7 @@ export default function YearlySummaryTab({ yearly, fyStart }) {
       <div className="overline mb-1">Yearly Summary</div>
       <h3 className="font-display text-2xl font-semibold tracking-tight mb-5">{fyLabel(fyStart)}</h3>
 
-      <div className="bg-card border border-border rounded-md overflow-hidden hover-lift" data-testid="yearly-summary">
+      <div className="bg-card border border-border rounded-md overflow-hidden hover-lift overflow-x-auto w-full scrollbar-none" data-testid="yearly-summary">
         <Table className="data-table">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
