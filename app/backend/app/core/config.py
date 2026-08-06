@@ -9,6 +9,7 @@ class Settings:
     MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
     DB_NAME = os.environ.get("DB_NAME", "finance_tracker")
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
+    ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
     
     FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS") # Should be a path to JSON or JSON string
     

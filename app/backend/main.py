@@ -11,17 +11,35 @@ from app.contact.routes import router as contact_router
 from app.invoices.routes import router as invoices_router
 from app.chat.routes import router as chat_router
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = FastAPI(title="SaaS Finance Tracker API")
 
+cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+if not cors_origins:
+    cors_origins = ["*"]
+
+# In production, be more permissive with CORS (credentials=False so it's safe)
+if settings.ENVIRONMENT == "production":
+    # Allow all vercel.app subdomains and render.com subdomains
+    cors_origins.extend([
+        "https://*.vercel.app",
+        "https://*.onrender.com",
+    ])
+    # Also allow the exact vercel URL if VERCEL_URL env var is set (Vercel sets this automatically)
+    vercel_url = os.environ.get("VERCEL_URL")
+    if vercel_url:
+        cors_origins.append(f"https://{vercel_url}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=False,
-    allow_origins=settings.CORS_ORIGINS.split(","),
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origin_regex=r"https://.*\.vercel\.app$" if settings.ENVIRONMENT == "production" else None,
 )
 
 @app.on_event("startup")
@@ -42,5 +60,6 @@ app.include_router(invoices_router)
 app.include_router(chat_router)
 
 @app.get("/")
+@app.head("/")
 async def root():
     return {"message": "Finance Tracker SaaS API"}
