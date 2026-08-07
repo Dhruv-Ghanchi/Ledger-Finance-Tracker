@@ -56,7 +56,7 @@ function App() {
           toastOptions={{
             classNames: {
               toast: "group",
-              closeButton: "left-[initial] right-4 top-1/2 -translate-y-1/2 !bg-transparent !border-none !shadow-none !text-muted-foreground hover:!text-foreground",
+              closeButton: "!left-auto !right-4 !top-1/2 !-translate-y-1/2 !translate-x-0 !bg-transparent !border-none !shadow-none !text-muted-foreground hover:!text-foreground",
             }
           }}
         />

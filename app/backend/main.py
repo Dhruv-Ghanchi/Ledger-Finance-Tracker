@@ -13,6 +13,8 @@ from app.chat.routes import router as chat_router
 from app.debts.routes import router as debts_router
 import logging
 import os
+import asyncio
+import requests
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -49,10 +51,23 @@ app.add_middleware(
     allow_origin_regex=allow_origin_regex,
 )
 
+async def keep_alive_task():
+    while True:
+        await asyncio.sleep(5 * 60)  # 5 minutes
+        url = os.environ.get("RENDER_EXTERNAL_URL")
+        if url:
+            try:
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(None, requests.get, url)
+                logging.info(f"Pinged {url} to keep alive")
+            except Exception as e:
+                logging.error(f"Error pinging {url}: {e}")
+
 @app.on_event("startup")
 async def startup_event():
     init_firebase()
     db.connect()
+    asyncio.create_task(keep_alive_task())
 
 @app.on_event("shutdown")
 async def shutdown_event():
