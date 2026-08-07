@@ -479,7 +479,7 @@ export default function Landing() {
                        <div className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-red-500/30 transition-colors">
                          <Mail className="w-4 h-4 text-red-500" />
                        </div>
-                       <span className="text-sm font-medium">dhruvghanchi@gmail.com</span>
+                       <span className="text-sm font-medium">dhruvghanchi.1@gmail.com</span>
                      </div>
                      <div className="flex items-center gap-4 text-muted-foreground hover:text-foreground transition-colors group">
                        <div className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-green-500/30 transition-colors">
@@ -621,7 +621,7 @@ export default function Landing() {
                 <a href="https://github.com/Dhruv-Ghanchi" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Github className="w-5 h-5" /></a>
                 <a href="https://www.linkedin.com/in/dhruv-ghanchi/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Linkedin className="w-5 h-5" /></a>
                 <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="w-5 h-5" /></a>
-                <a href="mailto:dhruvghanchi@gmail.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><GmailIcon className="w-5 h-5" /></a>
+                <a href="mailto:dhruvghanchi.1@gmail.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><GmailIcon className="w-5 h-5" /></a>
                 <a href="https://wa.me/919867783783" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><MessageSquare className="w-5 h-5" /></a>
               </div>
             </div>
