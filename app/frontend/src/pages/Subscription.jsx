@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { startSubscriptionCheckout } from "@/lib/razorpay";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CreditCard, Calendar, AlertCircle, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,12 +12,14 @@ import { formatINR, getSubscriptionExpiry } from "@/lib/format";
 import { hasPremiumAccess, isPaidPlan, isTrialActive } from "@/lib/premium";
 
 export default function SubscriptionPage() {
-  const { dbUser, currentUser } = useAuth();
+  const { dbUser, currentUser, refreshDbUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [cancelling, setCancelling] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
 
   useEffect(() => {
     fetchSubscription();
@@ -64,6 +67,25 @@ export default function SubscriptionPage() {
       user: dbUser,
       onSuccess: fetchSubscription,
     });
+  };
+
+  const handleRedeemPromo = async () => {
+    if (!promoCode.trim()) return;
+    setRedeeming(true);
+    try {
+      const updated = await refreshDbUser({ promo_code: promoCode.trim() });
+      if (updated?.promo_used && updated?.promo_code === promoCode.trim().toUpperCase()) {
+        toast.success("Promo code applied!");
+        setPromoCode("");
+        fetchSubscription();
+      } else {
+        toast.error("That code isn't valid, or has already been used.");
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to redeem code");
+    } finally {
+      setRedeeming(false);
+    }
   };
 
   if (loading) {
@@ -197,6 +219,30 @@ export default function SubscriptionPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Redeem a promo code — works regardless of how the account was
+              created (email, Google from Login, Google from Register). */}
+          {dbUser?.plan !== "lifetime" && dbUser?.plan !== "lifetimefree" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-lg">Have a promo code?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="Enter code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleRedeemPromo()}
+                    className="uppercase"
+                  />
+                  <Button onClick={handleRedeemPromo} disabled={redeeming || !promoCode.trim()}>
+                    {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : "Redeem"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Payment History */}
           {paymentHistory.length > 0 && (

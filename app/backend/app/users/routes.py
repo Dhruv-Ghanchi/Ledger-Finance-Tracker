@@ -44,16 +44,24 @@ async def apply_promo_code(
     if not promo:
         return {}
 
-    days = int(promo.get("days", 30))
-    end = (now + timedelta(days=days)).isoformat()
-    return {
-        "plan": promo.get("plan", "monthly"),
+    plan = promo.get("plan", "monthly")
+    update = {
+        "plan": plan,
         "subscription_status": "active",
-        "subscription_expiry": end,
         "promo_used": True,
         "promo_code": code,
-        "promo_expiry": end,
     }
+    if plan in ("lifetime", "lifetimefree"):
+        # Lifetime plans never expire — has_premium_access() grants access
+        # purely off `plan`, no expiry date needed or shown.
+        update["subscription_expiry"] = None
+        update["promo_expiry"] = None
+    else:
+        days = int(promo.get("days", 30))
+        end = (now + timedelta(days=days)).isoformat()
+        update["subscription_expiry"] = end
+        update["promo_expiry"] = end
+    return update
 
 
 @router.post("/sync")

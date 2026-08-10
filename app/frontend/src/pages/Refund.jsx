@@ -19,7 +19,7 @@ export default function Refund() {
         <h1 className="font-display text-4xl font-semibold tracking-tight mb-8">Refund Policy</h1>
         
         <div className="prose prose-invert max-w-none space-y-6">
-          <p className="text-muted-foreground"><strong>Last updated:</strong> July 31, 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> August 10, 2026</p>
 
           <h2>1. Free Trial</h2>
           <p>All new users receive a 60-day free trial with full access to premium features. No credit card is required to start the trial. You can cancel at any time during the trial without being charged.</p>
@@ -62,7 +62,7 @@ export default function Refund() {
           <p>All payments are processed through Razorpay. Refunds are subject to Razorpay's refund policies and processing timelines. Razorpay may deduct payment gateway fees from refund amounts as per their terms.</p>
 
           <h2>7. Cancellation vs Refund</h2>
-          <p>You can cancel your subscription at any time from the <Link to="/profile" className="underline">Profile Settings</Link> page. Cancellation stops future charges but does not entitle you to a refund for the current billing period. You will retain premium access until the end of the paid period.</p>
+          <p>You can cancel your subscription at any time from the <Link to="/subscription" className="underline">Subscription</Link> page. Cancellation stops future charges but does not entitle you to a refund for the current billing period. You will retain premium access until the end of the paid period.</p>
 
           <h2>8. Disputes</h2>
           <p>If you dispute a charge with your bank/card issuer before contacting us, the dispute process may delay or prevent a direct refund. We recommend contacting us first to resolve any billing issues.</p>

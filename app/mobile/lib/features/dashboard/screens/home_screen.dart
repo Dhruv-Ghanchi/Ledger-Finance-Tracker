@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,7 +66,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final entriesAsync = ref.watch(entriesProvider(fyStart));
     final nf = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
 
-    final dbUser = ref.watch(authProvider).dbUser;
+    final authState = ref.watch(authProvider);
+    final dbUser = authState.dbUser;
+    final firebaseUser = authState.firebaseUser;
     final onPaidPlan = isPaidPlan(dbUser);
     final onTrial = isTrialActive(dbUser);
     final trialDays = trialDaysRemaining(dbUser);
@@ -97,16 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               },
               borderRadius: BorderRadius.circular(999),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2E2E5), width: 2),
-                  color: const Color(0xFFF4F4F5),
-                ),
-                child: const Icon(Icons.person_outline, size: 24, color: Color(0xFF64646A)),
-              ),
+              child: _buildHeaderAvatar(dbUser, firebaseUser),
             ),
           ),
         ),
@@ -394,6 +388,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onRetry: () => ref.invalidate(monthlySummaryProvider),
         ),
       ),
+    );
+  }
+
+  /// Header avatar: the user's photo if we have one, else their initial,
+  /// else a generic fallback icon.
+  Widget _buildHeaderAvatar(Map<String, dynamic>? dbUser, dynamic firebaseUser) {
+    final photo = (dbUser?['profile_picture'] as String?)?.trim();
+    final fallbackPhoto = firebaseUser?.photoURL as String?;
+    final picture = (photo != null && photo.isNotEmpty) ? photo : fallbackPhoto;
+
+    ImageProvider? image;
+    if (picture != null && picture.isNotEmpty) {
+      if (picture.startsWith('data:image')) {
+        try {
+          final base64Str = picture.substring(picture.indexOf(',') + 1);
+          image = MemoryImage(base64Decode(base64Str));
+        } catch (_) {
+          image = null;
+        }
+      } else if (picture.startsWith('http')) {
+        image = NetworkImage(picture);
+      }
+    }
+
+    final name = (dbUser?['name'] as String?)?.trim().isNotEmpty == true
+        ? dbUser!['name'] as String
+        : (firebaseUser?.displayName as String?)?.trim();
+    final email = (dbUser?['email'] as String?) ?? (firebaseUser?.email as String?);
+    final initial = (name != null && name.isNotEmpty)
+        ? name[0].toUpperCase()
+        : (email != null && email.isNotEmpty ? email[0].toUpperCase() : null);
+
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFE2E2E5), width: 2),
+        color: const Color(0xFFEFF3FB),
+        image: image != null ? DecorationImage(image: image, fit: BoxFit.cover) : null,
+      ),
+      alignment: Alignment.center,
+      child: image == null
+          ? Text(
+              initial ?? '',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F52BA)),
+            )
+          : null,
     );
   }
 

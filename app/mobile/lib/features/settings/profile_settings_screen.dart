@@ -19,8 +19,10 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
+  final _promoController = TextEditingController();
   String? _profilePicture;
   bool _busy = false;
+  bool _redeeming = false;
 
   @override
   void initState() {
@@ -42,7 +44,28 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _promoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _redeemPromo() async {
+    final code = _promoController.text.trim();
+    if (code.isEmpty) return;
+    setState(() => _redeeming = true);
+    try {
+      await ref.read(authProvider.notifier).syncWithBackend(promoCode: code);
+      final dbUser = ref.read(authProvider).dbUser;
+      final applied = dbUser?['promo_used'] == true &&
+          (dbUser?['promo_code']?.toString().toUpperCase() == code.toUpperCase());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(applied ? 'Promo code applied!' : "That code isn't valid, or has already been used."),
+        ));
+      }
+      if (applied) _promoController.clear();
+    } finally {
+      if (mounted) setState(() => _redeeming = false);
+    }
   }
 
   Future<void> _handleSave() async {
@@ -214,7 +237,7 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
                   ],
                   _buildSubRow('Expires', planExpiry(dbUser), theme),
                   const SizedBox(height: 16),
-                  if (!hasPremium)
+                  if (!hasPremium) ...[
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -235,6 +258,33 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _promoController,
+                            textCapitalization: TextCapitalization.characters,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              hintText: 'Have a promo code?',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: _redeeming ? null : _redeemPromo,
+                            child: _redeeming
+                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Text('Redeem'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

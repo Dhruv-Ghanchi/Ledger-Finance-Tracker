@@ -19,13 +19,13 @@ export default function Terms() {
         <h1 className="font-display text-4xl font-semibold tracking-tight mb-8">Terms & Conditions</h1>
         
         <div className="prose prose-invert max-w-none space-y-6">
-          <p className="text-muted-foreground"><strong>Last updated:</strong> July 31, 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> August 10, 2026</p>
 
           <h2>1. Acceptance of Terms</h2>
-          <p>By accessing and using Ledger ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.</p>
+          <p>By accessing and using Ledger ("the Service") — via our website or our Android and iOS applications — you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.</p>
 
           <h2>2. Description of Service</h2>
-          <p>Ledger is a personal finance tracking SaaS platform that allows users to record income and expenses, categorize transactions, view summaries, and export data. The Service is provided "as is" and "as available" without warranties of any kind.</p>
+          <p>Ledger is a personal finance tracking SaaS platform, available on the web and as native mobile apps, that allows users to record income and expenses, categorize transactions, view summaries, and export data. The Service is provided "as is" and "as available" without warranties of any kind.</p>
 
           <h2>3. User Accounts</h2>
           <ul>
@@ -45,7 +45,7 @@ export default function Terms() {
           </ul>
           
           <h2>5. AI Features & API Usage</h2>
-          <p>By using the Ledger AI Assistant and Smart Receipt Scanner features, you consent to the sending of necessary text and image data to third-party AI service providers (such as OpenAI or Groq) solely for the purpose of processing and extracting your financial data. Your data is strictly not used by these providers to train their AI models.</p>
+          <p>By using the KOIN AI Assistant and Smart Receipt Scanner features, you consent to the sending of necessary text and image data to third-party AI service providers (Google Gemini, with Groq as a fallback) solely for the purpose of processing and extracting your financial data. Your data is strictly not used by these providers to train their AI models.</p>
 
           <h2>6. Data & Privacy</h2>
           <p>Your financial data is stored securely and is never shared with third parties. See our <Link to="/privacy" className="underline">Privacy Policy</Link> for details on data collection, storage, and your rights.</p>

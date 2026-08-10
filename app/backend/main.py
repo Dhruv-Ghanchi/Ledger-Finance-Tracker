@@ -52,21 +52,17 @@ app.add_middleware(
 )
 
 async def seed_promo_codes():
-    """Seed a few launch promo codes (idempotent)."""
+    """Seed the lifetime-free promo code (idempotent). Handed out selectively
+    to grant specific users permanent premium access with no expiry."""
     try:
-        codes = [
-            {"code": "WELCOME30", "plan": "monthly", "days": 30, "active": True, "created_at": None},
-            {"code": "LAUNCH90", "plan": "monthly", "days": 90, "active": True, "created_at": None},
-            {"code": "FRIENDS", "plan": "yearly", "days": 30, "active": True, "created_at": None},
-        ]
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc).isoformat()
-        for code in codes:
-            existing = await db.db.promo_codes.find_one({"code": code["code"]})
-            if not existing:
-                code["created_at"] = now
-                await db.db.promo_codes.insert_one(code)
-        logging.info("Seeded %d promo codes", len(codes))
+        existing = await db.db.promo_codes.find_one({"code": "LIFETIMEFREE"})
+        if not existing:
+            await db.db.promo_codes.insert_one(
+                {"code": "LIFETIMEFREE", "plan": "lifetimefree", "days": None, "active": True, "created_at": now}
+            )
+        logging.info("Seeded promo code: LIFETIMEFREE")
     except Exception as e:
         logging.error("Failed to seed promo codes: %s", e)
 

@@ -19,7 +19,9 @@ export default function Privacy() {
         <h1 className="font-display text-4xl font-semibold tracking-tight mb-8">Privacy Policy</h1>
         
         <div className="prose prose-invert max-w-none space-y-6">
-          <p className="text-muted-foreground"><strong>Last updated:</strong> July 31, 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> August 10, 2026</p>
+
+          <p>This policy covers Ledger on the web and on our Android and iOS applications.</p>
 
           <h2>1. Information We Collect</h2>
           <p>We collect the following information when you use Ledger:</p>
@@ -28,6 +30,7 @@ export default function Privacy() {
             <li><strong>Financial Data:</strong> Transaction amounts, categories, dates, notes, scope (personal/business)</li>
             <li><strong>Usage Data:</strong> IP address, browser type, device information, access times</li>
             <li><strong>Subscription Data:</strong> Plan type, payment history (via Razorpay), subscription status</li>
+            <li><strong>Device Permissions (mobile app only):</strong> Access to your photo library / file storage, requested only when you choose to import a receipt or statement</li>
           </ul>
 
           <h2>2. How We Use Your Information</h2>
