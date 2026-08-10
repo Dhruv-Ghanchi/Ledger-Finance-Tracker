@@ -27,6 +27,35 @@ class SyncRequest(BaseModel):
     provider: Optional[str] = None
     promo_code: Optional[str] = None
 
+
+async def apply_promo_code(
+    user: dict,
+    promo_code: Optional[str],
+    now: datetime,
+) -> dict:
+    """Apply a valid promo code to a user. Returns the update dict (empty if none)."""
+    if not promo_code or not promo_code.strip():
+        return {}
+    if user.get("promo_used"):
+        return {}
+
+    code = promo_code.strip().upper()
+    promo = await db.db.promo_codes.find_one({"code": code, "active": True})
+    if not promo:
+        return {}
+
+    days = int(promo.get("days", 30))
+    end = (now + timedelta(days=days)).isoformat()
+    return {
+        "plan": promo.get("plan", "monthly"),
+        "subscription_status": "active",
+        "subscription_expiry": end,
+        "promo_used": True,
+        "promo_code": code,
+        "promo_expiry": end,
+    }
+
+
 @router.post("/sync")
 async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUser = Depends(get_current_user)):
     user = await db.db.users.find_one({"firebase_uid": current_user.firebase_uid}, {"_id": 0})
@@ -48,6 +77,9 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
             "trial_end": (now + timedelta(days=60)).isoformat(),
             "subscription_expiry": None
         }
+        # Apply promo code on first sync (registration)
+        promo_updates = await apply_promo_code(user_doc, body.promo_code if body else None, now)
+        user_doc.update(promo_updates)
         await db.db.users.insert_one(user_doc.copy())
         
         cats = generate_default_categories(current_user.firebase_uid)
@@ -64,6 +96,10 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
                 updates["profile_picture"] = body.profile_picture
             if body.phone and not user.get("phone"):
                 updates["phone"] = body.phone
+                
+        # Apply promo code if provided and not yet used
+        promo_updates = await apply_promo_code(user, body.promo_code if body else None, now)
+        updates.update(promo_updates)
                 
         # One-time 60-day trial grant for existing users who never had one.
         # Covers users created before the trial feature, plus anyone currently

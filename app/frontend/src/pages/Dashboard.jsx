@@ -161,7 +161,9 @@ export default function Dashboard() {
       await api.post(`/debts/${id}/settle`, data);
       toast.success("IOU settled successfully!");
       setSettleDebtOpen(false);
-      refreshAll();
+      // Settling creates a linked entry dated today — jump the view there so
+      // it's visible even if the dashboard was showing a different month.
+      refreshAll({ date: new Date().toISOString().slice(0, 10) });
     } catch (e) {
       toast.error(e.response?.data?.detail || "Failed to settle IOU");
     }
@@ -453,7 +455,16 @@ export default function Dashboard() {
         onOpenChange={setReviewOpen}
         initialEntries={reviewEntries}
         categories={categories}
-        onSaved={() => refreshAll()}
+        onSaved={(savedEntries) => {
+          // Imported entries can land in a different month/FY than the one
+          // currently being viewed — jump to the most recent one so they're
+          // actually visible instead of looking like they never saved.
+          const mostRecent = (savedEntries || []).reduce(
+            (latest, e) => (!latest || e.date > latest.date ? e : latest),
+            null
+          );
+          refreshAll(mostRecent);
+        }}
       />
 
       <AddDebtDialog

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signInWithEmailAndPassword, signInWithPopup, googleProvider, auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail, googleProvider, auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -24,7 +25,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       handleSuccess();
     } catch (error) {
-      alert("Failed to login: " + error.message);
+      toast.error("Failed to login: " + error.message);
     }
   };
 
@@ -33,7 +34,20 @@ export default function Login() {
       await signInWithPopup(auth, googleProvider);
       handleSuccess();
     } catch (error) {
-      alert("Failed to login with Google: " + error.message);
+      toast.error("Failed to login with Google: " + error.message);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Enter your email above first, then click \"Forgot password?\"");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Password reset email sent — check your inbox.");
+    } catch (error) {
+      toast.error("Could not send reset email: " + error.message);
     }
   };
 
@@ -69,13 +83,22 @@ export default function Login() {
               />
             </div>
             <div className="mb-8">
-              <label className="overline block mb-2">Password</label>
-              <input 
-                type="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                className="w-full flex h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" 
-                required 
+              <div className="flex items-center justify-between mb-2">
+                <label className="overline">Password</label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full flex h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                required
               />
             </div>
             <button type="submit" className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-foreground text-background text-sm font-medium py-3 hover:bg-foreground/90 transition-colors">

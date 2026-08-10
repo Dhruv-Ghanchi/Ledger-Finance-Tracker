@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "563408458274",
+    "project_id": "ledger-finance-app-49bdc",
+    "storage_bucket": "ledger-finance-app-49bdc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563408458274:android:dd8eba2673d29b87fbb07b",
+        "android_client_info": {
+          "package_name": "com.dhruv.ledger_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "563408458274-6ls334cfilcjdq4hrs0qnaf2jcs8r9oe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dhruv.ledger_mobile",
+            "certificate_hash": "11964dc57651afb4e738c0b17b97cb5a94cfe309"
+          }
+        },
+        {
+          "client_id": "563408458274-h2ob175bp9tt0crkcl1anglgv3ngs30g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDP1Zm9eAYrpt9XjCO4gRtetK4D2CVzpxU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "563408458274-h2ob175bp9tt0crkcl1anglgv3ngs30g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "563408458274-2ioqj90av93gbtqltv15emu0v9a6or7v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dhruv.ledgerMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

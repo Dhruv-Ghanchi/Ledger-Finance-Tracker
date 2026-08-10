@@ -186,7 +186,7 @@ export default function AIChatAssistant() {
       </div>
 
       {open && (
-        <div className="fixed bottom-6 right-6 w-[380px] h-[600px] max-h-[80vh] bg-background border border-border rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 w-auto sm:w-[380px] h-[600px] max-h-[80vh] bg-background border border-border rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
           <div className="bg-card text-foreground px-5 py-4 flex items-center justify-between border-b border-border shadow-sm">
             <div className="flex items-center gap-3">
               <div className="bg-[#0F52BA]/5 border border-[#0F52BA]/10 rounded-full w-9 h-9 flex items-center justify-center shadow-inner">

@@ -24,10 +24,10 @@
       "light": "#DBEAFE",
       "dark": "#1E3A8A"
     },
-    "business_green": {
-      "DEFAULT": "#059669",
-      "light": "#D1FAE5",
-      "dark": "#064E3B"
+    "business_amber": {
+      "DEFAULT": "#F59E0B",
+      "light": "#FEF3C7",
+      "dark": "#92400E"
     },
     "neutral_accents": {
       "muted": "#71717A",
@@ -35,7 +35,7 @@
     },
     "rules": [
       "Color is function only. The UI should be primarily monochrome (white, zinc-100, zinc-950).",
-      "Use Personal Blue and Business Green exclusively to differentiate the two transaction types. Do not use these colors for unrelated UI decorations.",
+      "Use Personal Blue and Business Amber exclusively to differentiate the two transaction types. Do not use these colors for unrelated UI decorations.",
       "Ensure all text against colored backgrounds meets at least a 4.5:1 contrast ratio.",
       "Always set text color on hover explicitly."
     ]
@@ -57,7 +57,7 @@
     "tables": "Shadcn Table with clear border-b separation, mono-font numbers, right-aligned amounts.",
     "inputs": "Shadcn Select, Input, and Form with sharp 1px borders.",
     "modals": "Shadcn Dialog for the 'Add Entry' form with backdrop-blur overlay.",
-    "charts": "Recharts with simple, classic visualizations (Bar for income vs expense, Line for yearly trend, Pie/Donut for categories). Use the Personal Blue and Business Green in charts.",
+    "charts": "Recharts with simple, classic visualizations (Bar for income vs expense, Line for yearly trend, Pie/Donut for categories). Use the Personal Blue and Business Amber in charts.",
     "pin_screen": "Minimalist centered layout, monochrome, relying purely on typography and input feedback."
   },
   "motion_and_interactions": {
@@ -82,12 +82,12 @@
   },
   "instructions_to_main_agent": [
     "Install required fonts (Cabinet Grotesk, IBM Plex Sans, JetBrains Mono) via Google Fonts or custom font faces in index.css.",
-    "Override Tailwind config colors to match the specific palette (zinc variations, custom blue/green).",
+    "Override Tailwind config colors to match the specific palette (zinc variations, custom blue/amber).",
     "Implement a F-pattern dashboard with a sticky top header containing the Month, Year, and primary 'Add Entry' CTA.",
     "Ensure amounts use the Indian numbering system format (lakhs/crores) with the ₹ symbol.",
     "Use Recharts for all data visualization, styling them with minimal grids and mono-spaced tooltips.",
     "The PIN lock screen should be the root route '/' or a full-screen overlay if unauthenticated, using a simple Shadcn OTP input or standard password input.",
-    "Ensure 'Personal' and 'Business' toggle in the Add Entry modal heavily highlights the chosen context (Blue for Personal, Green for Business) to avoid mistaken entries.",
+    "Ensure 'Personal' and 'Business' toggle in the Add Entry modal heavily highlights the chosen context (Blue for Personal, Amber for Business) to avoid mistaken entries.",
     "Use Shadcn UI primitives for Tabs, Table, Dialog, Select, Input, Button, Card."
   ]
 }

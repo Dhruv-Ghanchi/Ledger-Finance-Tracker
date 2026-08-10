@@ -1,3 +1,4 @@
+import razorpay
 from razorpay.errors import SignatureVerificationError
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from pydantic import BaseModel
@@ -147,7 +148,7 @@ async def razorpay_webhook(request: Request, x_razorpay_signature: str = Header(
         
     event = data.get("event")
     
-    if event in ["subscription.charged", "subscription.activated", "subscription.updated"]:
+    if event in ["subscription.charged", "subscription.activated", "subscription.updated", "subscription.authenticated"]:
         sub_data = data["payload"]["subscription"]["entity"]
         sub_id = sub_data["id"]
         status = sub_data["status"]
@@ -199,7 +200,7 @@ async def razorpay_webhook(request: Request, x_razorpay_signature: str = Header(
                     }}
                 )
     
-    elif event in ["subscription.cancelled", "subscription.halted"]:
+    elif event in ["subscription.cancelled", "subscription.halted", "subscription.completed"]:
         sub_data = data["payload"]["subscription"]["entity"]
         sub_id = sub_data["id"]
         status = sub_data["status"]
@@ -232,6 +233,33 @@ async def razorpay_webhook(request: Request, x_razorpay_signature: str = Header(
                 "razorpay_payment_id": payment_id,
                 "amount": amount,
                 "status": "captured",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.db.payments.insert_one(payment_doc)
+
+    elif event == "payment.failed":
+        # Covers failed subscription renewal charges as well as failed one-time
+        # payments, so they show up in the user's payment history instead of
+        # silently disappearing.
+        payment_data = data["payload"]["payment"]["entity"]
+        payment_id = payment_data["id"]
+        amount = payment_data.get("amount", 0)
+        sub_id = payment_data.get("subscription_id")
+        notes = payment_data.get("notes", {}) or {}
+        uid = notes.get("firebase_uid")
+
+        if not uid and sub_id:
+            sub_doc = await db.db.subscriptions.find_one({"razorpay_subscription_id": sub_id})
+            uid = sub_doc.get("user_id") if sub_doc else None
+
+        if uid:
+            payment_doc = {
+                "id": str(uuid.uuid4()),
+                "user_id": uid,
+                "razorpay_payment_id": payment_id,
+                "razorpay_subscription_id": sub_id,
+                "amount": amount,
+                "status": "failed",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.db.payments.insert_one(payment_doc)

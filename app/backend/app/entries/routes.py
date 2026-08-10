@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime, timezone
 import uuid
 import io
@@ -26,6 +26,22 @@ router = APIRouter(prefix="/api", tags=["entries"])
 
 # ── Models ─────────────────────────────────────────────────────────────────────
 
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+def _check_date_str(v: str) -> str:
+    if not _DATE_RE.match(v):
+        raise ValueError("date must be in YYYY-MM-DD format")
+    try:
+        datetime.strptime(v, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("date is not a valid calendar date")
+    return v
+
+def _check_positive_amount(v: float) -> float:
+    if v <= 0:
+        raise ValueError("amount must be greater than 0")
+    return v
+
 class Entry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -49,6 +65,9 @@ class EntryCreate(BaseModel):
     category: str
     note: Optional[str] = ""
 
+    _validate_date = field_validator("date")(_check_date_str)
+    _validate_amount = field_validator("amount")(_check_positive_amount)
+
 class EntryUpdate(BaseModel):
     date: Optional[str] = None
     amount: Optional[float] = None
@@ -56,6 +75,16 @@ class EntryUpdate(BaseModel):
     scope: Optional[Literal["personal", "business"]] = None
     category: Optional[str] = None
     note: Optional[str] = None
+
+    @field_validator("date")
+    @classmethod
+    def _validate_date(cls, v):
+        return _check_date_str(v) if v is not None else v
+
+    @field_validator("amount")
+    @classmethod
+    def _validate_amount(cls, v):
+        return _check_positive_amount(v) if v is not None else v
 
 # ── Query builder ──────────────────────────────────────────────────────────────
 
@@ -227,38 +256,40 @@ async def yearly_summary(
 
 # ── Export routes ──────────────────────────────────────────────────────────────
 
-@router.get("/export/csv")
-async def export_csv(
-    current_user: CurrentUser = Depends(get_current_user),
-    fy_start: Optional[int] = None,
-    year: Optional[int] = None,
-    month: Optional[int] = None,
+def build_range_query(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     scope: Optional[str] = None,
 ):
-    q = build_entries_query(current_user.firebase_uid, year, month, fy_start, scope)
-    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
-    buf = io.StringIO()
-    w = csv.writer(buf)
-    w.writerow(["Date", "Scope", "Type", "Category", "Amount (INR)", "Note"])
-    for d in docs:
-        w.writerow([d["date"], d["scope"], d["type"], d["category"], f'{d["amount"]:.2f}', d.get("note", "")])
-    buf.seek(0)
-    return StreamingResponse(
-        iter([buf.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=finance_export.csv"},
-    )
+    q = {"user_id": user_id}
+    if start_date or end_date:
+        date_q = {}
+        if start_date:
+            date_q["$gte"] = start_date
+        if end_date:
+            date_q["$lte"] = end_date
+        q["date"] = date_q
+    if scope:
+        q["scope"] = scope
+    return q
 
-@router.get("/export/xlsx")
-async def export_xlsx(
-    current_user: CurrentUser = Depends(get_current_user),
+
+def build_export_query(
+    user_id: str,
     fy_start: Optional[int] = None,
     year: Optional[int] = None,
     month: Optional[int] = None,
     scope: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
 ):
-    q = build_entries_query(current_user.firebase_uid, year, month, fy_start, scope)
-    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
+    if start_date or end_date:
+        return build_range_query(user_id, start_date, end_date, scope)
+    return build_entries_query(user_id, year, month, fy_start, scope)
+
+
+def _build_xlsx_bytes(docs) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "Entries"
@@ -277,36 +308,33 @@ async def export_xlsx(
     stream = io.BytesIO()
     wb.save(stream)
     stream.seek(0)
-    return StreamingResponse(
-        stream,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment; filename=finance_export.xlsx"},
-    )
+    return stream.getvalue()
 
-@router.get("/export/pdf")
-async def export_pdf(
-    current_user: CurrentUser = Depends(get_current_user),
-    fy_start: Optional[int] = None,
-    year: Optional[int] = None,
-    month: Optional[int] = None,
-    scope: Optional[str] = None,
-):
-    q = build_entries_query(current_user.firebase_uid, year, month, fy_start, scope)
-    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
-    
+
+def _build_csv_bytes(docs) -> bytes:
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["Date", "Scope", "Type", "Category", "Amount (INR)", "Note"])
+    for d in docs:
+        w.writerow([d["date"], d["scope"], d["type"], d["category"], f'{d["amount"]:.2f}', d.get("note", "")])
+    buf.seek(0)
+    return buf.getvalue().encode("utf-8")
+
+
+def _build_pdf_bytes(docs, scope: Optional[str] = None) -> bytes:
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
     elements = []
-    
+
     styles = getSampleStyleSheet()
     title = f"Finance Export"
     if scope:
         title += f" ({scope.capitalize()})"
     elements.append(Paragraph(title, styles['Title']))
     elements.append(Spacer(1, 20))
-    
+
     data = [["Date", "Scope", "Type", "Category", "Amount (INR)", "Note"]]
-    
+
     for d in docs:
         data.append([
             d["date"],
@@ -316,7 +344,7 @@ async def export_pdf(
             f'{d["amount"]:.2f}',
             d.get("note", "")[:50]
         ])
-        
+
     t = Table(data, colWidths=[70, 60, 60, 100, 80, 180])
     t.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#09090b")),
@@ -328,20 +356,119 @@ async def export_pdf(
         ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
         ('TOPPADDING', (0, 0), (-1, 0), 8),
         ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#f8fafc")),
-        ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#e2e8f0")),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor("#e2e8f0")),
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 1), (-1, -1), 9),
     ]))
-    
+
     elements.append(t)
     doc.build(elements)
-    
+
     buf.seek(0)
+    return buf.getvalue()
+
+
+@router.get("/export/csv")
+async def export_csv(
+    current_user: CurrentUser = Depends(get_current_user),
+    fy_start: Optional[int] = None,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    scope: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    q = build_export_query(current_user.firebase_uid, fy_start, year, month, scope, start_date, end_date)
+    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
     return StreamingResponse(
-        buf,
+        iter([_build_csv_bytes(docs)]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=finance_export.csv"},
+    )
+
+
+@router.get("/export/xlsx")
+async def export_xlsx(
+    current_user: CurrentUser = Depends(get_current_user),
+    fy_start: Optional[int] = None,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    scope: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    q = build_export_query(current_user.firebase_uid, fy_start, year, month, scope, start_date, end_date)
+    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
+    payload = _build_xlsx_bytes(docs)
+    return StreamingResponse(
+        io.BytesIO(payload),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=finance_export.xlsx"},
+    )
+
+
+@router.get("/export/pdf")
+async def export_pdf(
+    current_user: CurrentUser = Depends(get_current_user),
+    fy_start: Optional[int] = None,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    scope: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    q = build_export_query(current_user.firebase_uid, fy_start, year, month, scope, start_date, end_date)
+    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
+    payload = _build_pdf_bytes(docs, scope)
+    return StreamingResponse(
+        io.BytesIO(payload),
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=finance_export.pdf"},
     )
+
+
+@router.get("/export/email/{format}")
+async def export_email(
+    format: Literal["xlsx", "pdf"],
+    email: str = Query(...),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    scope: Optional[str] = None,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Generate a report for the given date range and email it as an attachment."""
+    from app.core.email import send_email
+
+    if not start_date or not end_date:
+        raise HTTPException(status_code=400, detail="start_date and end_date are required for email delivery")
+
+    q = build_range_query(current_user.firebase_uid, start_date, end_date, scope)
+    docs = await db.db.entries.find(q, {"_id": 0}).sort("date", 1).to_list(100000)
+
+    user = await db.db.users.find_one({"firebase_uid": current_user.firebase_uid}, {"_id": 0})
+
+    if format == "xlsx":
+        payload = _build_xlsx_bytes(docs)
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        filename = "finance_export.xlsx"
+    else:
+        payload = _build_pdf_bytes(docs, scope)
+        media_type = "application/pdf"
+        filename = "finance_export.pdf"
+
+    subject = f"Ledger Finance Export ({start_date} to {end_date})"
+    body = (
+        f"Hi {(user or {}).get('name') or 'there'},\n\n"
+        f"Your finance report for {start_date} to {end_date} "
+        f"({scope.title() if scope else 'all scopes'}) is attached.\n\n"
+        "— Ledger"
+    )
+
+    ok = await send_email(subject, email, body, attachments=[(filename, payload, media_type)])
+    if not ok:
+        raise HTTPException(status_code=500, detail="Email could not be sent. SMTP may not be configured.")
+
+    return {"ok": True, "message": f"Report emailed to {email}"}
 
 
 # ════════════════════════════════════════════════════════════════════════════════

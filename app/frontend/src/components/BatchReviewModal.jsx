@@ -82,7 +82,7 @@ export default function BatchReviewModal({ open, onOpenChange, initialEntries, c
       const res = await api.post("/entries/import/confirm", { entries });
       toast.success(`Successfully imported ${res.data.inserted_count} entries!`);
       onOpenChange(false);
-      if (onSaved) onSaved();
+      if (onSaved) onSaved(entries);
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Failed to save entries.");
     } finally {
@@ -143,6 +143,20 @@ export default function BatchReviewModal({ open, onOpenChange, initialEntries, c
                       <SelectContent>
                         <SelectItem value="expense">Expense</SelectItem>
                         <SelectItem value="income">Income</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Scope */}
+                  <div className="w-full sm:w-28 flex-shrink-0">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Scope</p>
+                    <Select value={entry.scope} onValueChange={(val) => updateEntry(idx, "scope", val)}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="personal">Personal</SelectItem>
+                        <SelectItem value="business">Business</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

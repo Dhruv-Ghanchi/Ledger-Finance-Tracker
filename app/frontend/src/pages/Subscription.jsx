@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { startSubscriptionCheckout } from "@/lib/razorpay";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,54 +54,16 @@ export default function SubscriptionPage() {
     }
   };
 
-  const loadRazorpay = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  const handleUpgrade = async (plan) => {
+  const handleUpgrade = (plan) => {
     if (!currentUser) {
       navigate(`/register?intent=${plan}`);
       return;
     }
-
-    const res = await loadRazorpay();
-    if (!res) {
-      alert("Razorpay SDK failed to load");
-      return;
-    }
-
-    try {
-      const { data } = await api.post("/payments/subscribe", { plan });
-      
-      const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-        subscription_id: data.subscription_id,
-        name: "Ledger SaaS",
-        description: `${plan} Premium Subscription`,
-        handler: function (response) {
-          toast.success("Payment successful! Your premium access will be active shortly.");
-          fetchSubscription();
-        },
-        prefill: {
-          email: dbUser?.email,
-          name: dbUser?.name,
-        },
-        theme: {
-          color: "#0a0a0a",
-        },
-      };
-
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
-    } catch (error) {
-      toast.error("Failed to initiate subscription: " + (error.response?.data?.detail || error.message));
-    }
+    startSubscriptionCheckout({
+      plan,
+      user: dbUser,
+      onSuccess: fetchSubscription,
+    });
   };
 
   if (loading) {

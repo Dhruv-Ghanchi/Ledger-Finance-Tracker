@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional, Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime, timezone
+import re
 import uuid
 
 from app.auth.firebase import get_current_user, CurrentUser
@@ -11,6 +12,22 @@ from app.subscriptions.checker import has_premium_access
 router = APIRouter(prefix="/api/debts", tags=["debts"])
 
 # ── Models ─────────────────────────────────────────────────────────────────────
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+def _check_date_str(v: str) -> str:
+    if not _DATE_RE.match(v):
+        raise ValueError("date must be in YYYY-MM-DD format")
+    try:
+        datetime.strptime(v, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("date is not a valid calendar date")
+    return v
+
+def _check_positive_amount(v: float) -> float:
+    if v <= 0:
+        raise ValueError("amount must be greater than 0")
+    return v
 
 class Debt(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -32,6 +49,9 @@ class DebtCreate(BaseModel):
     expected_date: str
     note: Optional[str] = ""
 
+    _validate_date = field_validator("expected_date")(_check_date_str)
+    _validate_amount = field_validator("amount")(_check_positive_amount)
+
 class DebtUpdate(BaseModel):
     person_name: Optional[str] = None
     amount: Optional[float] = None
@@ -39,9 +59,27 @@ class DebtUpdate(BaseModel):
     expected_date: Optional[str] = None
     note: Optional[str] = None
 
+    @field_validator("expected_date")
+    @classmethod
+    def _validate_date(cls, v):
+        return _check_date_str(v) if v is not None else v
+
+    @field_validator("amount")
+    @classmethod
+    def _validate_amount(cls, v):
+        return _check_positive_amount(v) if v is not None else v
+
 class DebtSettle(BaseModel):
-    category: str
+    generate_entry: bool = True
     scope: Literal["personal", "business"] = "personal"
+    category: Optional[str] = None
+
+    @field_validator("category")
+    @classmethod
+    def _require_category_when_generating_entry(cls, v, info):
+        if info.data.get("generate_entry", True) and not v:
+            raise ValueError("category is required when generating a matching entry")
+        return v
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
 
@@ -118,15 +156,22 @@ async def settle_debt(
         {"_id": debt["_id"]},
         {"$set": {"status": "settled", "settled_at": now}}
     )
-    
+
+    debt["status"] = "settled"
+    debt["settled_at"] = now
+    debt.pop("_id", None)
+
+    if not req.generate_entry:
+        return {"debt": debt, "entry": None}
+
     # Create corresponding entry
     entry_type = "expense" if debt["type"] == "to_pay" else "income"
     # E.g. "Paid John Doe" or "Collected from Jane Doe"
     action = "Paid" if debt["type"] == "to_pay" else "Collected from"
     note = f"{action} {debt['person_name']} - {debt.get('note', '')}".strip()
-    
+
     entry_date = datetime.now().strftime("%Y-%m-%d")
-    
+
     entry = {
         "id": str(uuid.uuid4()),
         "user_id": current_user.firebase_uid,
@@ -137,11 +182,8 @@ async def settle_debt(
         "category": req.category,
         "note": note
     }
-    
+
     await db.db.entries.insert_one(entry)
     entry.pop("_id", None)
-    
-    debt["status"] = "settled"
-    debt["settled_at"] = now
-    debt.pop("_id", None)
+
     return {"debt": debt, "entry": entry}
