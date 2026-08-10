@@ -706,7 +706,17 @@ export default function Landing() {
           
           <div className="pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} Ledger Platform. All rights reserved.</p>
-            <p className="flex items-center gap-1">Designed with <span className="text-red-500">♥</span> for financial freedom.</p>
+            <p className="flex items-center gap-1">
+              Built by{" "}
+              <a
+                href="https://www.linkedin.com/in/dhruv-ghanchi/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-foreground hover:underline"
+              >
+                Dhruv Ghanchi
+              </a>
+            </p>
           </div>
         </div>
       </footer>

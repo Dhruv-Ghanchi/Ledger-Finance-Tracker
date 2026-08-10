@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /subscription
+
+Sitemap: https://ledger-dhruv-ghanchi.vercel.app/sitemap.xml
