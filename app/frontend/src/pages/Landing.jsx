@@ -10,7 +10,7 @@ import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Gith
 // GitHub's "latest" release alias always resolves to the newest release's
 // asset with this exact filename — the uploaded release asset must be named
 // exactly "Ledger.apk" so the browser saves the download as "Ledger.apk".
-const ANDROID_APK_URL = "https://github.com/Dhruv-Ghanchi/Ledger/releases/latest/download/Ledger.apk";
+const ANDROID_APK_URL = "https://github.com/Dhruv-Ghanchi/Ledger-Finance-Tracker/releases/latest/download/Ledger.apk";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
