@@ -71,11 +71,11 @@ export default function Pricing() {
               <h3 className="font-display text-xl font-semibold tracking-tight mb-2">Free Trial</h3>
               <div className="mb-6">
                 <span className="font-display text-4xl font-semibold tracking-tight">₹0</span>
-                <span className="text-sm text-muted-foreground ml-1">/ 2 months</span>
+                <span className="text-sm text-muted-foreground ml-1">/ 6 months</span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
                 <li className="flex items-center">✓ <span className="ml-2">All premium features</span></li>
-                <li className="flex items-center">✓ <span className="ml-2">2 months duration</span></li>
+                <li className="flex items-center">✓ <span className="ml-2">6 months duration</span></li>
                 <li className="flex items-center">✓ <span className="ml-2">No credit card required</span></li>
               </ul>
               <Button disabled variant="outline" className="w-full h-11 border-border mt-auto">
@@ -90,7 +90,7 @@ export default function Pricing() {
               </div>
               <h3 className="font-display text-xl font-semibold tracking-tight mb-2">Monthly</h3>
               <div className="mb-6">
-                <span className="font-display text-4xl font-semibold tracking-tight">₹49</span>
+                <span className="font-display text-4xl font-semibold tracking-tight">₹11</span>
                 <span className="text-sm text-muted-foreground ml-1">/ month</span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
@@ -107,11 +107,11 @@ export default function Pricing() {
             <div className="bg-card border border-border rounded-xl p-8 flex flex-col shadow-sm">
               <h3 className="font-display text-xl font-semibold tracking-tight mb-2">Yearly</h3>
               <div className="mb-6">
-                <span className="font-display text-4xl font-semibold tracking-tight">₹499</span>
+                <span className="font-display text-4xl font-semibold tracking-tight">₹51</span>
                 <span className="text-sm text-muted-foreground ml-1">/ year</span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
-                <li className="flex items-center">✓ <span className="ml-2">Save ~15% annually</span></li>
+                <li className="flex items-center">✓ <span className="ml-2">Save ~61% annually</span></li>
                 <li className="flex items-center">✓ <span className="ml-2">Unlimited entries</span></li>
                 <li className="flex items-center">✓ <span className="ml-2">Advanced reports</span></li>
                 <li className="flex items-center">✓ <span className="ml-2">Export data</span></li>

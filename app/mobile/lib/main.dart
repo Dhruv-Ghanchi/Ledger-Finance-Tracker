@@ -80,7 +80,7 @@ class _RootState extends ConsumerState<_Root> {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Expense Tracker',
+      title: 'Ledger',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,

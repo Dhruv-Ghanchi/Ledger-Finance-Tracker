@@ -2,11 +2,17 @@ from fastapi import APIRouter, Depends, Body, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+from firebase_admin import auth as firebase_auth
 from app.auth.firebase import get_current_user, CurrentUser
 from app.core.db import db
+import logging
 import uuid
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/users", tags=["users"])
+
+TRIAL_DAYS = 180  # 6 months
 
 def generate_default_categories(user_id: str):
     now = datetime.now(timezone.utc).isoformat()
@@ -32,17 +38,34 @@ async def apply_promo_code(
     user: dict,
     promo_code: Optional[str],
     now: datetime,
-) -> dict:
-    """Apply a valid promo code to a user. Returns the update dict (empty if none)."""
+) -> tuple[dict, Optional[str]]:
+    """Apply a valid promo code to a user.
+
+    Returns (update_dict, status). status is None if no code was submitted,
+    otherwise one of "applied", "already_used", "invalid", "exhausted" — the
+    caller surfaces this so redeemers of a capacity-limited code (see
+    `max_redemptions` below) see "this offer has ended" rather than a generic
+    invalid-code message once the real cap is hit.
+    """
     if not promo_code or not promo_code.strip():
-        return {}
+        return {}, None
     if user.get("promo_used"):
-        return {}
+        return {}, "already_used"
 
     code = promo_code.strip().upper()
     promo = await db.db.promo_codes.find_one({"code": code, "active": True})
     if not promo:
-        return {}
+        return {}, "invalid"
+
+    if promo.get("max_redemptions") is not None:
+        # Atomically claim one of the limited slots so two concurrent
+        # redemptions can't both read redeemed_count before either increments it.
+        claimed = await db.db.promo_codes.find_one_and_update(
+            {"code": code, "active": True, "$expr": {"$lt": ["$redeemed_count", "$max_redemptions"]}},
+            {"$inc": {"redeemed_count": 1}},
+        )
+        if not claimed:
+            return {}, "exhausted"
 
     plan = promo.get("plan", "monthly")
     update = {
@@ -61,7 +84,7 @@ async def apply_promo_code(
         end = (now + timedelta(days=days)).isoformat()
         update["subscription_expiry"] = end
         update["promo_expiry"] = end
-    return update
+    return update, "applied"
 
 
 @router.post("/sync")
@@ -79,14 +102,15 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
             "provider": body.provider if body and body.provider else "", 
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
+            "last_active": now.isoformat(),
             "plan": "trial",
             "subscription_status": "trial",
             "trial_start": now.isoformat(),
-            "trial_end": (now + timedelta(days=60)).isoformat(),
+            "trial_end": (now + timedelta(days=TRIAL_DAYS)).isoformat(),
             "subscription_expiry": None
         }
         # Apply promo code on first sync (registration)
-        promo_updates = await apply_promo_code(user_doc, body.promo_code if body else None, now)
+        promo_updates, promo_status = await apply_promo_code(user_doc, body.promo_code if body else None, now)
         user_doc.update(promo_updates)
         await db.db.users.insert_one(user_doc.copy())
         
@@ -96,7 +120,7 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
         
         user = user_doc
     else:
-        updates = {}
+        updates = {"last_active": now.isoformat()}
         if body:
             if body.name and not user.get("name"):
                 updates["name"] = body.name
@@ -106,10 +130,10 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
                 updates["phone"] = body.phone
                 
         # Apply promo code if provided and not yet used
-        promo_updates = await apply_promo_code(user, body.promo_code if body else None, now)
+        promo_updates, promo_status = await apply_promo_code(user, body.promo_code if body else None, now)
         updates.update(promo_updates)
                 
-        # One-time 60-day trial grant for existing users who never had one.
+        # One-time 6-month trial grant for existing users who never had one.
         # Covers users created before the trial feature, plus anyone currently
         # on the free plan. A user's trial is never reset once started.
         existing_plan = user.get("plan")
@@ -119,15 +143,61 @@ async def sync_user(body: Optional[SyncRequest] = None, current_user: CurrentUse
             updates["plan"] = "trial"
             updates["subscription_status"] = "trial"
             updates["trial_start"] = now.isoformat()
-            updates["trial_end"] = (now + timedelta(days=60)).isoformat()
+            updates["trial_end"] = (now + timedelta(days=TRIAL_DAYS)).isoformat()
             updates["subscription_expiry"] = None
                 
         if updates:
             updates["updated_at"] = now.isoformat()
             await db.db.users.update_one({"firebase_uid": current_user.firebase_uid}, {"$set": updates})
             user.update(updates)
-            
+
+    if promo_status:
+        # Transient — not persisted, just tells the caller which toast to show
+        # (e.g. "this offer has ended" for an exhausted capacity-limited code).
+        user = {**user, "promo_status": promo_status}
     return user
+
+async def purge_and_delete_user(uid: str) -> None:
+    """Permanently delete a user's account and every piece of associated data.
+
+    Shared by the self-service DELETE /me endpoint and the inactivity purge
+    script (deactivate_inactive_users.py) so both paths purge the exact same
+    set of collections — a list that would otherwise drift out of sync as new
+    user-scoped collections get added.
+
+    Best-effort on the Razorpay cancellation (a stuck gateway shouldn't block
+    a deletion) but the local data purge and Firebase identity removal must
+    both succeed, or callers can't rely on this claiming the account is gone
+    when the person could still log back in.
+    """
+    sub = await db.db.subscriptions.find_one({"user_id": uid})
+    if sub and sub.get("razorpay_subscription_id") and sub.get("status") not in ("cancelled", "completed"):
+        try:
+            from app.payments.routes import get_rzp_client
+            client = get_rzp_client()
+            if client:
+                client.subscription.cancel(sub["razorpay_subscription_id"])
+        except Exception as e:
+            logger.error(f"Error cancelling subscription during account deletion for {uid}: {e}")
+
+    for collection in ("entries", "categories", "debts", "subscriptions", "payments"):
+        await db.db[collection].delete_many({"user_id": uid})
+    await db.db.users.delete_one({"firebase_uid": uid})
+
+    firebase_auth.delete_user(uid)
+
+
+@router.delete("/me")
+async def delete_account(current_user: CurrentUser = Depends(get_current_user)):
+    """Permanently delete the current user's account and all associated data."""
+    try:
+        await purge_and_delete_user(current_user.firebase_uid)
+    except Exception as e:
+        logger.error(f"Error deleting Firebase auth user {current_user.firebase_uid}: {e}")
+        raise HTTPException(status_code=500, detail="Your data was deleted, but we couldn't remove your login. Contact support to finish closing the account.")
+
+    return {"ok": True}
+
 
 @router.put("/profile")
 async def update_profile(body: SyncRequest, current_user: CurrentUser = Depends(get_current_user)):

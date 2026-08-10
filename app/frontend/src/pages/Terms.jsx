@@ -37,7 +37,7 @@ export default function Terms() {
 
           <h2>4. Subscription & Billing</h2>
           <ul>
-            <li>All new users are granted a 60-day free trial with full premium access upon registration.</li>
+            <li>All new users are granted a 6-month free trial with full premium access upon registration.</li>
             <li>After the trial expires, premium subscriptions (AI Chat, OCR Scanner, Invoices) are billed monthly or annually via Razorpay.</li>
             <li>Subscriptions auto-renew unless cancelled before the renewal date.</li>
             <li>Refunds are handled per our <Link to="/refund" className="underline">Refund Policy</Link>.</li>

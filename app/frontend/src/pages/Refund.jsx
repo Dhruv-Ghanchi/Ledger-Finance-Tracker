@@ -22,13 +22,13 @@ export default function Refund() {
           <p className="text-muted-foreground"><strong>Last updated:</strong> August 10, 2026</p>
 
           <h2>1. Free Trial</h2>
-          <p>All new users receive a 60-day free trial with full access to premium features. No credit card is required to start the trial. You can cancel at any time during the trial without being charged.</p>
+          <p>All new users receive a 6-month free trial with full access to premium features. No credit card is required to start the trial. You can cancel at any time during the trial without being charged.</p>
 
           <h2>2. Paid Subscriptions</h2>
           <p>After the trial ends, or if you choose to upgrade early, you will be billed according to your chosen plan:</p>
           <ul>
-            <li><strong>Monthly:</strong> ₹49/month (billed monthly)</li>
-            <li><strong>Yearly:</strong> ₹499/year (billed annually, ~15% savings)</li>
+            <li><strong>Monthly:</strong> ₹11/month (billed monthly)</li>
+            <li><strong>Yearly:</strong> ₹51/year (billed annually, ~61% savings)</li>
           </ul>
           <p>Subscriptions auto-renew unless cancelled before the renewal date.</p>
 

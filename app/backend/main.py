@@ -51,18 +51,36 @@ app.add_middleware(
     allow_origin_regex=allow_origin_regex,
 )
 
+LAUNCH_PROMO_CODE = "EARLYACCESS"  # rename freely; the cap below is what actually matters
+LAUNCH_PROMO_MAX_REDEMPTIONS = 11
+
 async def seed_promo_codes():
-    """Seed the lifetime-free promo code (idempotent). Handed out selectively
-    to grant specific users permanent premium access with no expiry."""
+    """Seed promo codes (idempotent).
+
+    - LIFETIMEFREE: handed out manually/selectively by us, one at a time — no cap.
+    - EARLYACCESS (LAUNCH_PROMO_CODE): the public launch promo, capped at
+      LAUNCH_PROMO_MAX_REDEMPTIONS total redemptions. Advertise this same
+      number publicly — the cap is enforced atomically in apply_promo_code(),
+      so once it's claimed, later redeemers get an honest "this offer has ended".
+    """
     try:
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc).isoformat()
+
         existing = await db.db.promo_codes.find_one({"code": "LIFETIMEFREE"})
         if not existing:
             await db.db.promo_codes.insert_one(
                 {"code": "LIFETIMEFREE", "plan": "lifetimefree", "days": None, "active": True, "created_at": now}
             )
-        logging.info("Seeded promo code: LIFETIMEFREE")
+            logging.info("Seeded promo code: LIFETIMEFREE")
+
+        launch = await db.db.promo_codes.find_one({"code": LAUNCH_PROMO_CODE})
+        if not launch:
+            await db.db.promo_codes.insert_one({
+                "code": LAUNCH_PROMO_CODE, "plan": "lifetimefree", "days": None, "active": True,
+                "max_redemptions": LAUNCH_PROMO_MAX_REDEMPTIONS, "redeemed_count": 0, "created_at": now,
+            })
+            logging.info("Seeded promo code: %s (max %d redemptions)", LAUNCH_PROMO_CODE, LAUNCH_PROMO_MAX_REDEMPTIONS)
     except Exception as e:
         logging.error("Failed to seed promo codes: %s", e)
 

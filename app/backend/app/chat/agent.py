@@ -16,8 +16,10 @@ class ChatDependencies(BaseModel):
 # pydantic_ai's "google:" model string only picks up the GOOGLE_API_KEY env var,
 # but our .env (and Render) store the key as GEMINI_API_KEY — so build the model
 # explicitly instead of relying on that implicit lookup.
+# "gemini-1.5-flash" was retired by Google; "gemini-flash-latest" is a rolling
+# alias to Google's current fast/cheap model, chosen so this doesn't rot again.
 gemini_model = GoogleModel(
-    "gemini-1.5-flash",
+    "gemini-flash-latest",
     provider=GoogleProvider(api_key=os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")),
 )
 

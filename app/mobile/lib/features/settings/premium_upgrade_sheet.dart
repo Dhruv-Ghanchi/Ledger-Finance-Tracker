@@ -178,7 +178,7 @@ class _PremiumUpgradeSheetState extends ConsumerState<PremiumUpgradeSheet> {
                             children: [
                               Text('Monthly', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),
-                              Text('₹49/month', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                              Text('₹11/month', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
                             ],
                           ),
                   ),
@@ -205,7 +205,7 @@ class _PremiumUpgradeSheetState extends ConsumerState<PremiumUpgradeSheet> {
                                   children: [
                                     Text('Yearly', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
                                     const SizedBox(height: 4),
-                                    Text('₹499/year', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary.withValues(alpha: 0.8))),
+                                    Text('₹51/year', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary.withValues(alpha: 0.8))),
                                   ],
                                 ),
                         ),

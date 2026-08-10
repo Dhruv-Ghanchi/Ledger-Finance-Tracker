@@ -74,12 +74,16 @@ export default function SubscriptionPage() {
     setRedeeming(true);
     try {
       const updated = await refreshDbUser({ promo_code: promoCode.trim() });
-      if (updated?.promo_used && updated?.promo_code === promoCode.trim().toUpperCase()) {
+      if (updated?.promo_status === "applied") {
         toast.success("Promo code applied!");
         setPromoCode("");
         fetchSubscription();
+      } else if (updated?.promo_status === "exhausted") {
+        toast.error("This offer has ended.");
+      } else if (updated?.promo_status === "already_used") {
+        toast.error("You've already redeemed a promo code.");
       } else {
-        toast.error("That code isn't valid, or has already been used.");
+        toast.error("That code isn't valid.");
       }
     } catch (e) {
       toast.error(e?.response?.data?.detail || "Failed to redeem code");
@@ -165,7 +169,7 @@ export default function SubscriptionPage() {
                     >
                       <div className="text-left">
                         <div className="font-semibold text-foreground group-hover:text-background">Monthly</div>
-                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹49/month</div>
+                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹11/month</div>
                       </div>
                     </Button>
                     <Button 
@@ -175,7 +179,7 @@ export default function SubscriptionPage() {
                     >
                       <div className="text-left">
                         <div className="font-semibold text-foreground group-hover:text-background">Yearly</div>
-                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹499/year <span className="text-green-600 font-medium ml-1">(Save 15%)</span></div>
+                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹51/year <span className="text-green-600 font-medium ml-1">(Save 61%)</span></div>
                       </div>
                     </Button>
                   </div>
@@ -292,7 +296,7 @@ export default function SubscriptionPage() {
                 <div className="space-y-3">
                   <h4 className="font-semibold">Free Trial</h4>
                   <ul className="text-sm text-muted-foreground space-y-2">
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> All premium features for 60 days</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> All premium features for 6 months</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Unlimited entries</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Export data (CSV/Excel)</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Custom categories (unlimited)</li>
