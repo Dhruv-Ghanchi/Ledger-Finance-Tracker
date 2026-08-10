@@ -1,127 +1,124 @@
-# 💸 Ledger – The Intelligent Personal & Business Finance Tracker
+<div align="center">
 
-**Ledger** is a next-generation, AI-powered SaaS platform designed to effortlessly manage your personal and business finances.  
-Moving beyond traditional manual entry, Ledger leverages advanced Artificial Intelligence to automate data extraction, provide conversational financial insights, and generate professional invoices, all wrapped in a beautifully modern interface.
+<img src="app/frontend/public/og-image.png" alt="Ledger" width="600" />
 
----
+### The minimalist, privacy-first personal & business finance tracker.
 
-## 🔗 Live Demo
+[![Web App](https://img.shields.io/badge/Web-Live-0e0e10?style=for-the-badge)](https://ledger-dhruv-ghanchi.vercel.app)
+[![Android](https://img.shields.io/badge/Android-Download%20APK-3ddc84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Dhruv-Ghanchi/Ledger-Finance-Tracker/releases/latest/download/Ledger.apk)
+[![iOS](https://img.shields.io/badge/iOS-Coming%20Soon-999999?style=for-the-badge&logo=apple&logoColor=white)]()
 
-- **Frontend**: [https://ledger-dhruv-ghanchi.vercel.app](https://ledger-dhruv-ghanchi.vercel.app)  
-- **Backend API**: [https://ledger-finance-tracker-backend.onrender.com](https://ledger-finance-tracker-backend.onrender.com)
+**[Live Demo](https://ledger-dhruv-ghanchi.vercel.app)** · **[Report a Bug](https://github.com/Dhruv-Ghanchi/Ledger-Finance-Tracker/issues)** · **[Request a Feature](https://github.com/Dhruv-Ghanchi/Ledger-Finance-Tracker/issues)**
 
----
-
-## ✨ Why Choose Ledger?
-
-Ledger goes beyond standard dashboards by integrating intelligent automation directly into your financial workflow.
-
-### 🤖 AI-Powered Capabilities (Premium)
-- **KOIN AI Co-pilot**: Chat with your personalized AI assistant. Ask questions like *"How much did I spend on food this month?"* or *"Log a $50 business travel expense"* and watch KOIN instantly analyze your data or log entries for you.
-- **IOUs & Debts Tracking**: Keep a meticulous record of money you owe or are owed. Create entries, settle them partially or fully, and watch your Dashboard update seamlessly.
-- **Smart Receipt & Invoice Extraction**: Simply upload a photo of a receipt or a PDF statement. Our AI instantly extracts the date, amount, category, and vendor, turning unstructured images into perfectly categorized financial data.
-- **Professional PDF Generation**: Instantly generate and download beautiful, itemized PDF invoices and financial statements with a single click.
-- **Fully Responsive Mobile Design**: Beautiful on any device. Navigate your dashboard, view data tables, and interact with the UI flawlessly on phones, tablets, and desktops.
-
-### 💼 Core Financial Tracking
-- **Dual Workspace Scope**: Switch seamlessly between **Personal** and **Business** workspaces to keep your finances strictly separated but easily accessible.
-- **Intuitive Dashboards**: Visualize your cash flow with dynamic Recharts (Income vs. Expense bars, Category breakdowns, and Net Trend lines).
-- **Financial Year Alignment**: Native support for the Indian Financial Year (April–March) for accurate tax-season reporting.
-- **Custom Categorization**: Start with 11 smart default categories, and create unlimited custom categories tailored to your life.
-- **Flexible Exports**: One-click exports of your filtered financial data to CSV or Excel (.xlsx).
-
-### 🚀 Seamless SaaS Experience
-- **60-Day Premium Trial**: All new users receive a 60-day free trial with full access to all AI and premium features.
-- **Razorpay Integration**: Frictionless upgrades to Monthly or Yearly premium plans.
-- **Multi-User Security**: Secure Google OAuth and Email/Password authentication powered by Firebase.
+</div>
 
 ---
+
+Ledger is an AI-powered platform for tracking personal and business finances — replacing manual spreadsheet entry with conversational logging, automatic receipt scanning, and clean, real-time dashboards. It runs on the web and as native Android/iOS apps, all backed by the same account.
+
+## ✨ Features
+
+**AI-Powered**
+- 🤖 **KOIN AI Co-pilot** — chat naturally ("log ₹500 on groceries", "how much did I spend on food this month?") and KOIN logs entries or answers from your real data
+- 📷 **Smart Receipt Scanning** — photograph a receipt or upload a bank statement; amount, date, category, and vendor are extracted automatically
+- 📄 **Professional PDF Invoices** — generate itemized monthly/yearly statements in one click
+
+**Core Tracking**
+- 💼 **Personal & Business Scopes** — two fully separated ledgers, one account
+- 🤝 **IOUs & Debts** — track who owes who, settle partially or in full
+- 📊 **Live Dashboards** — income vs. expense trends, category breakdowns, net worth over time
+- 🇮🇳 **Indian Financial Year Native** — April–March FY handling built in, not bolted on
+- 🗂️ **Unlimited Custom Categories** — 11 smart defaults, add as many as you need
+- 📤 **CSV / Excel Export** — your data, portable, always
+
+**Account & Trust**
+- 🔐 Google OAuth or email/password via Firebase Auth
+- 🗑️ **Self-service account deletion** — permanently erase your account and all data, anytime, from Profile Settings
+- 🆓 **6-month free trial**, no card required
+
+## 💳 Pricing
+
+| Plan | Price | Notes |
+|---|---|---|
+| Free Trial | ₹0 | Full premium access for 6 months |
+| Monthly | ₹11 / month | |
+| Yearly | ₹51 / year | ~61% cheaper than monthly |
+
+## 📱 Get the App
+
+| Platform | Status |
+|---|---|
+| **Web** | [ledger-dhruv-ghanchi.vercel.app](https://ledger-dhruv-ghanchi.vercel.app) — works everywhere, installable as a PWA |
+| **Android** | [Direct APK download](https://github.com/Dhruv-Ghanchi/Ledger-Finance-Tracker/releases/latest/download/Ledger.apk) — signed release build, no Play Store needed |
+| **iOS** | Coming soon — use the web app in Safari in the meantime |
 
 ## 🧰 Tech Stack
 
-| Layer       | Technology |
-|-------------|------------|
-| **Frontend** | React 19, Tailwind CSS, shadcn/ui, Recharts, Firebase Auth, Razorpay SDK |
-| **Backend**  | FastAPI (Python 3.11+), Motor (async MongoDB driver), Firebase Admin, Google Gemini AI |
-| **Database** | MongoDB (Atlas or local) |
-| **Deployment** | Render (backend), Vercel (frontend), MongoDB Atlas (database) |
-| **AI Tools** | Serena MCP (Semantic IDE code analysis) & Ponytail (minimal code generation) |
+| Layer | Technology |
+|---|---|
+| **Web frontend** | React 19, Tailwind CSS, shadcn/ui, Recharts |
+| **Mobile** | Flutter (Android + iOS), Riverpod |
+| **Backend** | FastAPI (Python), Motor (async MongoDB driver) |
+| **Database** | MongoDB Atlas |
+| **Auth** | Firebase Authentication |
+| **Payments** | Razorpay |
+| **AI** | Google Gemini (primary), Groq (fallback) |
+| **Deployment** | Vercel (web), Render (API), MongoDB Atlas (data) |
 
----
+## 🚀 Local Development
 
-## 🚀 Getting Started (Development)
+### Prerequisites
+Node.js 18+, Python 3.11+, a MongoDB connection, a Firebase project, and (optionally) Razorpay + Gemini API keys.
 
-### 1. Prerequisites
-- **Node.js** (v18+) and **npm** / **yarn**
-- **Python** (3.11+) and **pip**
-- **MongoDB** (local or Atlas account)
-- **Firebase** Project (for Auth credentials)
-- **Razorpay** Account (for Payment keys)
-- **Google Gemini API Key** (for AI features)
-
-### 2. Backend Setup
+### Backend
 ```bash
 cd app/backend
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
-```
-Edit `.env` with your MongoDB connection string, Firebase Admin credentials (JSON stringified), Razorpay API keys, and Gemini API key.  
-Then run:
-```bash
+cp .env.example .env       # fill in your Mongo URL, Firebase creds, Razorpay & Gemini keys
 uvicorn main:app --reload --port 8000
 ```
 
-### 3. Frontend Setup
+### Frontend
 ```bash
 cd app/frontend
-cp .env.example .env
-```
-Add your Firebase client config, Razorpay Key ID, and Backend URL to `.env`.  
-Install dependencies:
-```bash
+cp .env.example .env       # fill in Firebase client config, Razorpay key, backend URL
 npm install --legacy-peer-deps
 npm start
 ```
 
----
+### Mobile
+```bash
+cd app/mobile
+flutter pub get
+flutter run
+```
 
-## 📖 How to Use Ledger
+## 🗺️ Repository Structure
 
-1. **Sign Up**: Create an account via Google or Email to start your 60-day free trial.
-2. **Log Transactions**: 
-   - *Manual*: Click "Add Entry", select your scope (Personal/Business), and enter the details.
-   - *AI Import*: Click "Import Receipt", upload a photo of your bill, and let the AI fill out the form for you.
-3. **Chat with KOIN**: Click the AI Assistant button in the bottom right corner to ask questions about your spending trends or to log expenses conversationally.
-4. **Generate Reports**: Use the "Export" button on the dashboard to download CSVs, or generate professional PDF statements directly from the Yearly Summary tab.
-5. **Upgrade**: Once your trial expires, visit the Pricing page to seamlessly subscribe via Razorpay.
-
----
+```
+app/
+├── backend/    FastAPI service — auth, entries, subscriptions, AI chat, invoices
+├── frontend/   React web app
+└── mobile/     Flutter app (Android + iOS)
+```
 
 ## 🤝 Contributing
-This project welcomes contributions. Feel free to fork and adapt. If you find a bug or have an idea, open an issue or a pull request.
 
----
-
-## 🙏 Acknowledgements
-- **[shadcn/ui](https://ui.shadcn.com)** for beautiful components  
-- **[Recharts](https://recharts.org)** for charts  
-- **[FastAPI](https://fastapi.tiangolo.com)** for the robust backend  
-- **[Firebase](https://firebase.google.com)** for robust multi-user authentication
-- **[Razorpay](https://razorpay.com)** for smooth payment gateways
-- **Google Gemini** for powering the KOIN AI features
-- **Serena MCP & Ponytail** for accelerating agentic AI development.
-
----
+Found a bug or have an idea? [Open an issue](https://github.com/Dhruv-Ghanchi/Ledger-Finance-Tracker/issues) or send a pull request.
 
 ## 👤 Author
 
-**Dhruv Chandrakant Ghanchi**
+**Dhruv Ghanchi**
 
-- GitHub: [Dhruv-Ghanchi](https://github.com/Dhruv-Ghanchi)
-- LinkedIn: [dhruv-ghanchi-9b0180371](https://www.linkedin.com/in/dhruv-ghanchi-9b0180371/)
+[![GitHub](https://img.shields.io/badge/GitHub-Dhruv--Ghanchi-181717?style=flat&logo=github)](https://github.com/Dhruv-Ghanchi)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Dhruv%20Ghanchi-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/dhruv-ghanchi/)
 
 ---
 
-Made with ❤️ for easier financial tracking.
+<div align="center">
+
+© 2026 Ledger. All rights reserved. Built by [Dhruv Ghanchi](https://www.linkedin.com/in/dhruv-ghanchi/).
+
+</div>
