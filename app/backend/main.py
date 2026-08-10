@@ -51,6 +51,26 @@ app.add_middleware(
     allow_origin_regex=allow_origin_regex,
 )
 
+async def seed_promo_codes():
+    """Seed a few launch promo codes (idempotent)."""
+    try:
+        codes = [
+            {"code": "WELCOME30", "plan": "monthly", "days": 30, "active": True, "created_at": None},
+            {"code": "LAUNCH90", "plan": "monthly", "days": 90, "active": True, "created_at": None},
+            {"code": "FRIENDS", "plan": "yearly", "days": 30, "active": True, "created_at": None},
+        ]
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+        for code in codes:
+            existing = await db.db.promo_codes.find_one({"code": code["code"]})
+            if not existing:
+                code["created_at"] = now
+                await db.db.promo_codes.insert_one(code)
+        logging.info("Seeded %d promo codes", len(codes))
+    except Exception as e:
+        logging.error("Failed to seed promo codes: %s", e)
+
+
 async def keep_alive_task():
     while True:
         await asyncio.sleep(5 * 60)  # 5 minutes
@@ -67,6 +87,7 @@ async def keep_alive_task():
 async def startup_event():
     init_firebase()
     db.connect()
+    await seed_promo_codes()
     asyncio.create_task(keep_alive_task())
 
 @app.on_event("shutdown")

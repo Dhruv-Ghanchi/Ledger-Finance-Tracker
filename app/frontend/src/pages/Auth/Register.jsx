@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword, signInWithPopup, googleProvider, auth }
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function Register() {
   const [firstName, setFirstName] = useState("");
@@ -30,11 +31,11 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
     if (!agreeTerms) {
-      alert("You must agree to the Terms and Privacy Policy to register.");
+      toast.error("You must agree to the Terms and Privacy Policy to register.");
       return;
     }
     try {
@@ -50,7 +51,7 @@ export default function Register() {
       }
       handleSuccess();
     } catch (error) {
-      alert("Failed to register: " + error.message);
+      toast.error("Failed to register: " + error.message);
     }
   };
 
@@ -69,7 +70,7 @@ export default function Register() {
       }
       handleSuccess();
     } catch (error) {
-      alert("Failed to register with Google: " + error.message);
+      toast.error("Failed to register with Google: " + error.message);
     }
   };
 

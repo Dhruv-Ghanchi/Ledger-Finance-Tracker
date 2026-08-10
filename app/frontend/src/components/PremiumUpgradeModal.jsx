@@ -8,10 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Zap, FileText, Scan } from "lucide-react";
-import { api } from "@/lib/api";
+import { startSubscriptionCheckout } from "@/lib/razorpay";
 import { useAuth } from "@/context/AuthContext";
-import { mutate as swrMutate } from "swr";
-import { toast } from "sonner";
 
 export default function PremiumUpgradeModal() {
   const [open, setOpen] = useState(false);
@@ -26,44 +24,12 @@ export default function PremiumUpgradeModal() {
 
   const handleUpgrade = async (planType) => {
     setLoading(planType);
-    try {
-      const { data } = await api.post("/payments/subscribe", { plan: planType });
-      
-      const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-        subscription_id: data.subscription_id,
-        name: "Ledger Premium",
-        description: `${planType === 'monthly' ? 'Monthly' : 'Yearly'} Subscription`,
-        handler: async function (response) {
-          try {
-            await api.post("/users/sync", {}); 
-            swrMutate("/users/me");
-            toast.success("Subscription activated successfully!");
-            setOpen(false);
-          } catch (error) {
-            toast.error("Error verifying payment");
-          }
-        },
-        prefill: {
-          name: dbUser?.name || "",
-          email: dbUser?.email || "",
-          contact: dbUser?.phone || ""
-        },
-        theme: {
-          color: "#000000"
-        }
-      };
-      
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response){
-        toast.error(`Payment failed: ${response.error.description}`);
-      });
-      rzp.open();
-    } catch (error) {
-      toast.error("Could not initiate payment. Try again.");
-    } finally {
-      setLoading(null);
-    }
+    await startSubscriptionCheckout({
+      plan: planType,
+      user: dbUser,
+      onSuccess: () => setOpen(false),
+    });
+    setLoading(null);
   };
 
   return (

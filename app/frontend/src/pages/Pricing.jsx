@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/lib/api";
+import { startSubscriptionCheckout } from "@/lib/razorpay";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -23,54 +23,16 @@ export default function Pricing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, dbUser]);
 
-  const loadRazorpay = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  const handleUpgrade = async (plan) => {
+  const handleUpgrade = (plan) => {
     if (!currentUser) {
       navigate(`/register?intent=${plan}`);
       return;
     }
-
-    const res = await loadRazorpay();
-    if (!res) {
-      alert("Razorpay SDK failed to load");
-      return;
-    }
-
-    try {
-      const { data } = await api.post("/payments/subscribe", { plan });
-      
-      const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-        subscription_id: data.subscription_id,
-        name: "Ledger SaaS",
-        description: `${plan} Premium Subscription`,
-        handler: function (response) {
-          alert("Payment successful! Your premium access will be active shortly.");
-          navigate("/dashboard");
-        },
-        prefill: {
-          email: dbUser?.email,
-          name: dbUser?.name,
-        },
-        theme: {
-          color: "#0a0a0a", // Matches the minimalist dark aesthetic
-        },
-      };
-
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
-    } catch (error) {
-      alert("Failed to initiate subscription: " + (error.response?.data?.detail || error.message));
-    }
+    startSubscriptionCheckout({
+      plan,
+      user: dbUser,
+      onSuccess: () => navigate("/dashboard"),
+    });
   };
 
   return (

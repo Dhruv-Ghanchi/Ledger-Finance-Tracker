@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText, Menu } from "lucide-react";
+import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText, Menu, Apple, Clock } from "lucide-react";
+
+// GitHub's "latest" release alias always resolves to the newest release's
+// asset with this exact filename — update ANDROID_APK_URL only if you ever
+// rename the uploaded asset.
+const ANDROID_APK_URL = "https://github.com/Dhruv-Ghanchi/Ledger/releases/latest/download/ledger-android.apk";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -61,6 +66,7 @@ export default function Landing() {
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
+            <a href="#download" className="hover:text-foreground transition-colors">Download</a>
             <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
             <a href="#contact" className="hover:text-foreground transition-colors">Contact</a>
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
@@ -95,6 +101,9 @@ export default function Landing() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <a href="#how-it-works" className="w-full">How it works</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#download" className="w-full">Download</a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <a href="#pricing" className="w-full">Pricing</a>
@@ -367,6 +376,54 @@ export default function Landing() {
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-foreground/5 blur-[100px] rounded-full"></div>
              </div>
            </div>
+        </section>
+
+        {/* Download Section */}
+        <section id="download" className="w-full py-24 bg-muted/20 border-y border-border/40 px-4">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-16">
+              <h2 className="font-display text-3xl font-bold tracking-tight mb-4">Take Ledger with you</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">The full app, in your pocket. Same account, same data, everywhere.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              {/* Android */}
+              <Card className="bg-background border-border shadow-sm flex flex-col">
+                <CardHeader className="flex-1">
+                  <Smartphone className="h-8 w-8 mb-4 text-foreground" />
+                  <CardTitle className="font-display">Android</CardTitle>
+                  <CardDescription className="text-sm">Direct APK download. Works on Android 8.0 and above.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <a href={ANDROID_APK_URL} className="block">
+                    <Button className="w-full gap-2 bg-foreground text-background hover:bg-foreground/90">
+                      <Download className="h-4 w-4" /> Download for Android
+                    </Button>
+                  </a>
+                  <p className="text-[11px] text-muted-foreground text-center mt-3">
+                    Your browser may warn about apps from outside the Play Store — this is expected for direct downloads. The app is signed and safe.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* iOS */}
+              <Card className="bg-background border-border shadow-sm flex flex-col opacity-75">
+                <CardHeader className="flex-1">
+                  <Apple className="h-8 w-8 mb-4 text-foreground" />
+                  <CardTitle className="font-display">iOS</CardTitle>
+                  <CardDescription className="text-sm">iPhone and iPad support is on the way.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button disabled className="w-full gap-2" variant="outline">
+                    <Clock className="h-4 w-4" /> Coming Soon
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground text-center mt-3">
+                    In the meantime, the web app works great in Safari on iPhone.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </section>
 
         {/* Pricing Section */}
