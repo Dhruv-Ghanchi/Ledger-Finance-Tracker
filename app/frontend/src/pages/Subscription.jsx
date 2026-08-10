@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { startSubscriptionCheckout } from "@/lib/razorpay";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CreditCard, Calendar, AlertCircle, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,12 +12,14 @@ import { formatINR, getSubscriptionExpiry } from "@/lib/format";
 import { hasPremiumAccess, isPaidPlan, isTrialActive } from "@/lib/premium";
 
 export default function SubscriptionPage() {
-  const { dbUser, currentUser } = useAuth();
+  const { dbUser, currentUser, refreshDbUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [cancelling, setCancelling] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
 
   useEffect(() => {
     fetchSubscription();
@@ -64,6 +67,29 @@ export default function SubscriptionPage() {
       user: dbUser,
       onSuccess: fetchSubscription,
     });
+  };
+
+  const handleRedeemPromo = async () => {
+    if (!promoCode.trim()) return;
+    setRedeeming(true);
+    try {
+      const updated = await refreshDbUser({ promo_code: promoCode.trim() });
+      if (updated?.promo_status === "applied") {
+        toast.success("Promo code applied!");
+        setPromoCode("");
+        fetchSubscription();
+      } else if (updated?.promo_status === "exhausted") {
+        toast.error("This offer has ended.");
+      } else if (updated?.promo_status === "already_used") {
+        toast.error("You've already redeemed a promo code.");
+      } else {
+        toast.error("That code isn't valid.");
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to redeem code");
+    } finally {
+      setRedeeming(false);
+    }
   };
 
   if (loading) {
@@ -143,7 +169,7 @@ export default function SubscriptionPage() {
                     >
                       <div className="text-left">
                         <div className="font-semibold text-foreground group-hover:text-background">Monthly</div>
-                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹49/month</div>
+                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹11/month</div>
                       </div>
                     </Button>
                     <Button 
@@ -153,7 +179,7 @@ export default function SubscriptionPage() {
                     >
                       <div className="text-left">
                         <div className="font-semibold text-foreground group-hover:text-background">Yearly</div>
-                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹499/year <span className="text-green-600 font-medium ml-1">(Save 15%)</span></div>
+                        <div className="text-sm text-muted-foreground group-hover:text-background/80">₹51/year <span className="text-green-600 font-medium ml-1">(Save 61%)</span></div>
                       </div>
                     </Button>
                   </div>
@@ -197,6 +223,30 @@ export default function SubscriptionPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Redeem a promo code — works regardless of how the account was
+              created (email, Google from Login, Google from Register). */}
+          {dbUser?.plan !== "lifetime" && dbUser?.plan !== "lifetimefree" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-lg">Have a promo code?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="Enter code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleRedeemPromo()}
+                    className="uppercase"
+                  />
+                  <Button onClick={handleRedeemPromo} disabled={redeeming || !promoCode.trim()}>
+                    {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : "Redeem"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Payment History */}
           {paymentHistory.length > 0 && (
@@ -246,7 +296,7 @@ export default function SubscriptionPage() {
                 <div className="space-y-3">
                   <h4 className="font-semibold">Free Trial</h4>
                   <ul className="text-sm text-muted-foreground space-y-2">
-                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> All premium features for 60 days</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> All premium features for 6 months</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Unlimited entries</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Export data (CSV/Excel)</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-foreground" /> Custom categories (unlimited)</li>

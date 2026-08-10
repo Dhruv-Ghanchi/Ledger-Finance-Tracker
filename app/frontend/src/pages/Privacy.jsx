@@ -19,7 +19,9 @@ export default function Privacy() {
         <h1 className="font-display text-4xl font-semibold tracking-tight mb-8">Privacy Policy</h1>
         
         <div className="prose prose-invert max-w-none space-y-6">
-          <p className="text-muted-foreground"><strong>Last updated:</strong> July 31, 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> August 10, 2026</p>
+
+          <p>This policy covers Ledger on the web and on our Android and iOS applications.</p>
 
           <h2>1. Information We Collect</h2>
           <p>We collect the following information when you use Ledger:</p>
@@ -28,6 +30,7 @@ export default function Privacy() {
             <li><strong>Financial Data:</strong> Transaction amounts, categories, dates, notes, scope (personal/business)</li>
             <li><strong>Usage Data:</strong> IP address, browser type, device information, access times</li>
             <li><strong>Subscription Data:</strong> Plan type, payment history (via Razorpay), subscription status</li>
+            <li><strong>Device Permissions (mobile app only):</strong> Access to your photo library / file storage, requested only when you choose to import a receipt or statement</li>
           </ul>
 
           <h2>2. How We Use Your Information</h2>
@@ -55,7 +58,7 @@ export default function Privacy() {
             <li><strong>Firebase Authentication:</strong> For user authentication and identity management</li>
             <li><strong>Razorpay:</strong> For subscription payment processing</li>
             <li><strong>MongoDB Atlas:</strong> For database hosting</li>
-            <li><strong>AI Providers (OpenAI/Groq/Google):</strong> We use external AI APIs to power Ledger AI and Smart Receipt Scanning. When you use these features, minimal required text data is sent to these providers for processing. <strong>Your data is NOT used to train their AI models.</strong></li>
+            <li><strong>AI Providers (Google Gemini, with Groq as a fallback):</strong> We use external AI APIs to power KOIN AI and Smart Receipt Scanning. When you use these features, minimal required text data is sent to these providers for processing. <strong>Your data is NOT used to train their AI models.</strong></li>
           </ul>
           <p>These providers have their own privacy policies. We only share the minimum data necessary for them to provide their services.</p>
           
@@ -70,9 +73,9 @@ export default function Privacy() {
           <h2>6. Data Retention</h2>
           <ul>
             <li>Account data is retained while your account is active</li>
-            <li>Financial data is retained for 7 years for tax/compliance purposes (Indian regulations)</li>
-            <li>You can request deletion of your account and associated data at any time</li>
-            <li>Upon deletion, data is purged within 30 days from active systems and 90 days from backups</li>
+            <li><strong>Inactivity deletion:</strong> If you don't open Ledger for 3 consecutive months, your account and all associated data are automatically and permanently deleted</li>
+            <li>You can also permanently delete your account and all associated data at any time from Profile Settings, or by contacting us via the Contact section below</li>
+            <li>Upon deletion (whether by you or due to inactivity), your data is immediately and permanently removed from active systems; backups may retain it for up to 90 days per our backup retention policy</li>
           </ul>
 
           <h2>7. Your Rights</h2>
@@ -93,7 +96,7 @@ export default function Privacy() {
           <p>Ledger is not intended for users under 18. We do not knowingly collect personal information from children under 18. If you become aware that a child has provided us with personal information, please contact us immediately.</p>
 
           <h2>10. International Transfers</h2>
-          <p>Your data is stored on servers located in India (Mumbai region). We do not transfer your data outside India unless required by law.</p>
+          <p>Your data is stored on MongoDB Atlas infrastructure hosted on AWS in the Mumbai, India region (ap-south-1). We do not transfer your data outside India unless required by law.</p>
 
           <h2>11. Changes to This Policy</h2>
           <p>We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the "Last updated" date.</p>

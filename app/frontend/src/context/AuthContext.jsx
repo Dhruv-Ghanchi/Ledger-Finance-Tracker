@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
         try {
           const providerData = user.providerData?.[0] || {};
           const { data } = await api.post("/users/sync", {
-            name: user.displayName || providerData.displayName || "Dev Tester",
+            name: user.displayName || providerData.displayName || "",
             profile_picture: user.photoURL || providerData.photoURL || "",
             phone: user.phoneNumber || providerData.phoneNumber || "",
             provider: providerData.providerId || "email"
@@ -38,8 +38,16 @@ export function AuthProvider({ children }) {
     await signOut(auth);
   };
 
+  // Re-syncs the backend profile (e.g. after redeeming a promo code) and
+  // refreshes dbUser without requiring a full page reload.
+  const refreshDbUser = async (extra = {}) => {
+    const { data } = await api.post("/users/sync", extra);
+    setDbUser(data);
+    return data;
+  };
+
   return (
-    <AuthContext.Provider value={{ currentUser, dbUser, loading, logout }}>
+    <AuthContext.Provider value={{ currentUser, dbUser, loading, logout, refreshDbUser }}>
       {children}
     </AuthContext.Provider>
   );

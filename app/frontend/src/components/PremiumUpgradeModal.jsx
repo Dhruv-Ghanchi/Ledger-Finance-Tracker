@@ -72,7 +72,7 @@ export default function PremiumUpgradeModal() {
               className="group h-auto border-2 border-border hover:border-foreground hover:bg-foreground transition-all relative w-full flex flex-col items-start justify-center p-4 text-left"
             >
               <div className="font-semibold text-foreground group-hover:text-background text-lg">Monthly</div>
-              <div className="text-sm text-muted-foreground group-hover:text-background/80">₹49/month</div>
+              <div className="text-sm text-muted-foreground group-hover:text-background/80">₹11/month</div>
             </Button>
             <Button 
               onClick={() => handleUpgrade("yearly")}
@@ -84,7 +84,7 @@ export default function PremiumUpgradeModal() {
                 Best Value
               </div>
               <div className="font-semibold text-primary group-hover:text-primary-foreground text-lg">Yearly</div>
-              <div className="text-sm text-primary/80 group-hover:text-primary-foreground/80">₹499/year</div>
+              <div className="text-sm text-primary/80 group-hover:text-primary-foreground/80">₹51/year</div>
             </Button>
           </div>
         </div>

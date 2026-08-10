@@ -3,7 +3,7 @@
 Covers:
 - has_premium_access for trial, free, monthly, lifetime, lifetimefree, expired trial
 - require_premium gating on categories (add / delete)
-- sync_user grants a one-time 60-day trial to new and existing free users
+- sync_user grants a one-time 6-month trial to new and existing free users
 """
 
 from datetime import datetime, timezone, timedelta
@@ -165,7 +165,7 @@ def test_lifetimefree_user_can_add_category(any_user_client):
 
 # ------------------------------------------------------------ sync trial grant
 
-def test_sync_new_user_gets_60_day_trial(any_user_client):
+def test_sync_new_user_gets_6_month_trial(any_user_client):
     run_async(clear_test_user())
     r = run_async(
         any_user_client.post("/api/users/sync", json={"name": "Premium Tester"})

@@ -87,7 +87,7 @@ def test_groq_fallback_model_recommends_ghanchi_card():
 
 @pytest.mark.live
 def test_api_keys_are_configured():
-    assert os.environ.get("GOOGLE_API_KEY"), "GOOGLE_API_KEY missing"
+    assert os.environ.get("GEMINI_API_KEY"), "GEMINI_API_KEY missing"
     assert os.environ.get("GROQ_API_KEY"), "GROQ_API_KEY missing"
 
 

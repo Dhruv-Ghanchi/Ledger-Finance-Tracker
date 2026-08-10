@@ -8,9 +8,9 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText, Menu, Apple, Clock } from "lucide-react";
 
 // GitHub's "latest" release alias always resolves to the newest release's
-// asset with this exact filename — update ANDROID_APK_URL only if you ever
-// rename the uploaded asset.
-const ANDROID_APK_URL = "https://github.com/Dhruv-Ghanchi/Ledger/releases/latest/download/ledger-android.apk";
+// asset with this exact filename — the uploaded release asset must be named
+// exactly "Ledger.apk" so the browser saves the download as "Ledger.apk".
+const ANDROID_APK_URL = "https://github.com/Dhruv-Ghanchi/Ledger/releases/latest/download/Ledger.apk";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -431,7 +431,7 @@ export default function Landing() {
           <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-16">
               <h2 className="font-display text-3xl font-bold tracking-tight mb-4">Simple, transparent pricing</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">Start free for 60 days. Upgrade when you're ready. No hidden fees.</p>
+              <p className="text-muted-foreground max-w-2xl mx-auto">Start free for 6 months. Upgrade when you're ready. No hidden fees.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -444,11 +444,11 @@ export default function Landing() {
                 <CardContent className="flex flex-col flex-1">
                   <div className="mb-6">
                     <span className="font-display text-4xl font-semibold tracking-tight">₹0</span>
-                    <span className="text-sm text-muted-foreground ml-1">/ 2 months</span>
+                    <span className="text-sm text-muted-foreground ml-1">/ 6 months</span>
                   </div>
                   <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
                     <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> All premium features</li>
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> 60 days duration</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> 6 months duration</li>
                     <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> No credit card required</li>
                   </ul>
                   <Button disabled variant="outline" className="w-full h-11 border-border mt-auto">
@@ -468,7 +468,7 @@ export default function Landing() {
                 </CardHeader>
                 <CardContent className="flex flex-col flex-1">
                   <div className="mb-6">
-                    <span className="font-display text-4xl font-semibold tracking-tight">₹49</span>
+                    <span className="font-display text-4xl font-semibold tracking-tight">₹11</span>
                     <span className="text-sm text-muted-foreground ml-1">/ month</span>
                   </div>
                   <ul className="text-sm text-foreground space-y-4 mb-8 flex-1">
@@ -489,15 +489,15 @@ export default function Landing() {
               <Card className="bg-card border border-border shadow-sm flex flex-col">
                 <CardHeader>
                   <CardTitle className="font-display text-xl font-semibold tracking-tight">Yearly</CardTitle>
-                  <CardDescription className="text-sm">Best value - save ~15%</CardDescription>
+                  <CardDescription className="text-sm">Best value - save ~61%</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-1">
                   <div className="mb-6">
-                    <span className="font-display text-4xl font-semibold tracking-tight">₹499</span>
+                    <span className="font-display text-4xl font-semibold tracking-tight">₹51</span>
                     <span className="text-sm text-muted-foreground ml-1">/ year</span>
                   </div>
                   <ul className="text-sm text-muted-foreground space-y-4 mb-8 flex-1">
-                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Save ~15% annually</li>
+                    <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Save ~61% annually</li>
                     <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Ledger AI Chatbot</li>
                     <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> Smart Receipt Scanner</li>
                     <li className="flex items-center"><CheckCircle2 className="h-5 w-5 text-foreground mr-2"/> PDF Invoice Downloads</li>
@@ -646,7 +646,7 @@ export default function Landing() {
               <AccordionItem value="item-4">
                 <AccordionTrigger className="text-left font-display">What happens after the free trial?</AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  After 60 days, you can choose to upgrade to a paid plan (Monthly ₹49/month or Yearly ₹499/year) or continue with limited features on the free tier.
+                  After 6 months, you can choose to upgrade to a paid plan (Monthly ₹11/month or Yearly ₹51/year) or continue with limited features on the free tier.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-5">
@@ -706,7 +706,17 @@ export default function Landing() {
           
           <div className="pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} Ledger Platform. All rights reserved.</p>
-            <p className="flex items-center gap-1">Designed with <span className="text-red-500">♥</span> for financial freedom.</p>
+            <p className="flex items-center gap-1">
+              Built by{" "}
+              <a
+                href="https://www.linkedin.com/in/dhruv-ghanchi/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-foreground hover:underline"
+              >
+                Dhruv Ghanchi
+              </a>
+            </p>
           </div>
         </div>
       </footer>

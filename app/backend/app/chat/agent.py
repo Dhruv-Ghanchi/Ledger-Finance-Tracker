@@ -1,4 +1,6 @@
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.providers.google import GoogleProvider
 from pydantic import BaseModel
 from typing import Optional, List, Literal, Any, Dict
 from datetime import datetime
@@ -11,10 +13,18 @@ from app.entries.routes import Entry, EntryCreate
 class ChatDependencies(BaseModel):
     user_id: str
 
-# Use the environment variable if present, otherwise just initialize the agent
-# Use Gemini Model. It requires GOOGLE_API_KEY to be set in the .env file
+# pydantic_ai's "google:" model string only picks up the GOOGLE_API_KEY env var,
+# but our .env (and Render) store the key as GEMINI_API_KEY — so build the model
+# explicitly instead of relying on that implicit lookup.
+# "gemini-1.5-flash" was retired by Google; "gemini-flash-latest" is a rolling
+# alias to Google's current fast/cheap model, chosen so this doesn't rot again.
+gemini_model = GoogleModel(
+    "gemini-flash-latest",
+    provider=GoogleProvider(api_key=os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")),
+)
+
 agent = Agent(
-    "google:gemini-1.5-flash",
+    gemini_model,
     deps_type=ChatDependencies,
     system_prompt=(
         "You are Koin, a friendly human-like financial co-pilot chatting with a friend via text message.\n\n"

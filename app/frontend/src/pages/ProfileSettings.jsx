@@ -6,19 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
+  AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Loader2, User, Mail, Phone, Camera, ArrowLeft } from "lucide-react";
 import { getSubscriptionExpiry } from "@/lib/format";
 import { useNavigate } from "react-router-dom";
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
-  const { dbUser, currentUser } = useAuth();
+  const { dbUser, currentUser, logout } = useAuth();
   const getFallback = (dbVal, currentVal, providerVal) => dbVal || currentVal || providerVal || "";
 
   const [name, setName] = useState(() => getFallback(dbUser?.name, currentUser?.displayName, currentUser?.providerData?.[0]?.displayName));
   const [phone, setPhone] = useState(() => getFallback(dbUser?.phone, currentUser?.phoneNumber, currentUser?.providerData?.[0]?.phoneNumber));
   const [profilePicture, setProfilePicture] = useState(() => getFallback(dbUser?.profile_picture, currentUser?.photoURL, currentUser?.providerData?.[0]?.photoURL));
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (dbUser) {
@@ -39,6 +44,19 @@ export default function ProfileSettings() {
       toast.error(e?.response?.data?.detail || "Failed to update profile");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await api.delete("/users/me");
+      toast.success("Your account and all data have been deleted");
+      await logout();
+      navigate("/", { replace: true });
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to delete account. Please try again or contact support.");
+      setDeleting(false);
     }
   };
 
@@ -183,6 +201,41 @@ export default function ProfileSettings() {
             >
               {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <>Save Changes</>}
             </Button>
+          </div>
+
+          <div className="mt-8 border border-destructive/40 rounded-xl p-8">
+            <h3 className="font-display text-lg font-semibold text-destructive">Danger Zone</h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              Permanently delete your account and all associated data — entries, categories, IOUs, subscription
+              and payment history. This cannot be undone.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="mt-4 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                  Delete My Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently deletes your account and every entry, category, IOU, and payment record tied
+                    to it, and cancels any active subscription. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => { e.preventDefault(); handleDeleteAccount(); }}
+                    disabled={deleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Yes, delete everything
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </main>
