@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText, Menu, Apple, Clock } from "lucide-react";
+import { ShieldCheck, BarChart3, Smartphone, ArrowRight, Zap, CheckCircle2, Github, Linkedin, MessageSquare, Mail, Phone, Loader2, FileSpreadsheet, ReceiptText, Twitter, Plus, Download, User, Instagram, Scan, FileText, Menu, Apple, Clock, Paperclip, X } from "lucide-react";
 
 // GitHub's "latest" release alias always resolves to the newest release's
 // asset with this exact filename — the uploaded release asset must be named
@@ -24,15 +24,43 @@ const GmailIcon = ({ className }) => (
 export default function Landing() {
   const { currentUser } = useAuth();
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+  const [contactFiles, setContactFiles] = useState([]);
   const [contactSubmitting, setContactSubmitting] = useState(false);
+
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      if (selectedFiles.length + contactFiles.length > 3) {
+        toast.error("You can only attach up to 3 files.");
+        return;
+      }
+      setContactFiles(prev => [...prev, ...selectedFiles].slice(0, 3));
+    }
+  };
+
+  const removeFile = (index) => {
+    setContactFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     setContactSubmitting(true);
     try {
-      await api.post("/contact", contactForm);
+      const formData = new FormData();
+      formData.append("name", contactForm.name);
+      formData.append("email", contactForm.email);
+      formData.append("message", contactForm.message);
+      
+      contactFiles.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      await api.post("/contact", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
       toast.success("Message sent successfully!");
       setContactForm({ name: "", email: "", message: "" });
+      setContactFiles([]);
     } catch (error) {
       if (error.response?.status === 429) {
         toast.error("Too many requests. Please try again later.");
@@ -606,6 +634,40 @@ export default function Landing() {
                         className="w-full rounded-md border border-input bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none transition-all"
                         placeholder="How can we help you?"
                       ></textarea>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">Attachments (Max 3)</label>
+                      </div>
+                      <div className="border border-input rounded-md p-3 bg-transparent">
+                        <input
+                          type="file"
+                          id="contact-file-upload"
+                          multiple
+                          onChange={handleFileChange}
+                          className="hidden"
+                          accept="image/*,.pdf,.doc,.docx,.txt"
+                        />
+                        <label
+                          htmlFor="contact-file-upload"
+                          className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors w-max"
+                        >
+                          <Paperclip className="w-4 h-4" />
+                          <span>Attach files (screenshots, etc.)</span>
+                        </label>
+                        {contactFiles.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            {contactFiles.map((f, i) => (
+                              <div key={i} className="flex items-center justify-between bg-muted/50 px-3 py-2 rounded-md text-sm border border-border/50">
+                                <span className="truncate max-w-[200px]">{f.name}</span>
+                                <button type="button" onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <Button type="submit" disabled={contactSubmitting} className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-medium text-sm transition-all shadow-sm">

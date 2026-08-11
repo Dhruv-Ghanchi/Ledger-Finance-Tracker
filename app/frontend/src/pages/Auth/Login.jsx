@@ -13,7 +13,7 @@ export default function Login() {
     const params = new URLSearchParams(window.location.search);
     const intent = params.get("intent");
     if (intent) {
-      navigate(`/pricing?auto_upgrade=${intent}`);
+      navigate(`/subscription?auto_upgrade=${intent}`);
     } else {
       navigate("/dashboard");
     }
