@@ -21,10 +21,6 @@ export default function SubscriptionPage() {
   const [promoCode, setPromoCode] = useState("");
   const [redeeming, setRedeeming] = useState(false);
 
-  useEffect(() => {
-    fetchSubscription();
-  }, [fetchSubscription]);
-
   const fetchSubscription = useCallback(async () => {
     if (!currentUser) return;
     try {
@@ -40,6 +36,10 @@ export default function SubscriptionPage() {
       setLoading(false);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchSubscription();
+  }, [fetchSubscription]);
 
   const handleCancel = async () => {
     if (!window.confirm("Are you sure you want to cancel your subscription? You'll lose premium access at the end of the billing period.")) {
