@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Login from "@/pages/Auth/Login";
 import Register from "@/pages/Auth/Register";
 import Dashboard from "@/pages/Dashboard";
-import Pricing from "@/pages/Pricing";
 import ProfileSettings from "@/pages/ProfileSettings";
 import Subscription from "@/pages/Subscription";
 import { Toaster } from "@/components/ui/sonner";
@@ -39,7 +38,6 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/pricing" element={<Pricing />} />
             <Route path="/profile" element={<ProtectedRoute element={<ProfileSettings />} />} />
             <Route path="/subscription" element={<ProtectedRoute element={<Subscription />} />} />
             <Route path="/terms" element={<Terms />} />

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { startSubscriptionCheckout } from "@/lib/razorpay";
@@ -20,10 +20,19 @@ export default function SubscriptionPage() {
   const [cancelling, setCancelling] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [redeeming, setRedeeming] = useState(false);
+  const autoUpgradeTriggered = useRef(false);
 
   useEffect(() => {
-    fetchSubscription();
-  }, [fetchSubscription]);
+    const params = new URLSearchParams(window.location.search);
+    const autoPlan = params.get("auto_upgrade");
+    if (autoPlan && currentUser && dbUser && !autoUpgradeTriggered.current) {
+      autoUpgradeTriggered.current = true;
+      // Clear the query parameter to prevent re-triggering on refresh
+      window.history.replaceState({}, document.title, "/subscription");
+      // Use setTimeout to allow the UI to finish rendering before showing Razorpay popup
+      setTimeout(() => handleUpgrade(autoPlan), 500);
+    }
+  }, [currentUser, dbUser]);
 
   const fetchSubscription = useCallback(async () => {
     if (!currentUser) return;
@@ -40,6 +49,10 @@ export default function SubscriptionPage() {
       setLoading(false);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchSubscription();
+  }, [fetchSubscription]);
 
   const handleCancel = async () => {
     if (!window.confirm("Are you sure you want to cancel your subscription? You'll lose premium access at the end of the billing period.")) {
