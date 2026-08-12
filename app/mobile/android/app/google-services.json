@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "563408458274-je8ea83qg3opbmod1lbam1fujg26gaok.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dhruv.ledger_mobile",
+            "certificate_hash": "9776481b03f4b2510dee35c93b926d03eb509233"
+          }
+        },
+        {
           "client_id": "563408458274-h2ob175bp9tt0crkcl1anglgv3ngs30g.apps.googleusercontent.com",
           "client_type": 3
         }
